@@ -177,28 +177,35 @@ function buildCard(idx, letter){
   });
   div.innerHTML =
     '<h2 id="cardTitle'+idx+'">'+(letter?'Option '+letter:'Your offer')+'</h2>'+
+    (letter==='B'
+      ? '<label class="chk" style="margin:2px 0 4px;"><input type="checkbox" id="mirror1" checked onchange="onMirror()"> <span>Same package &amp; reports as Option A</span></label>'+
+        '<div class="smallnote" id="mirrorNote1">Package, reports and base price follow Option A &#8212; set those on Option A. Only the term, seats and discount differ here (e.g. 1 year vs 2 years).</div>'
+      : '')+
     '<label class="fld" for="lbl'+idx+'">Contract label</label>'+
     '<input type="text" id="lbl'+idx+'" placeholder="e.g. 2-year contract" oninput="recalc('+idx+')">'+
-    '<label class="fld" for="pkg'+idx+'">Package</label>'+
-    '<select id="pkg'+idx+'" onchange="onPackage('+idx+')">'+
-      '<option value="full">Full subscription (all areas)</option>'+
-      '<option value="macro">Macro &amp; Markets bundle</option>'+
-      '<option value="asset">Asset Allocation bundle</option>'+
-      '<option value="custom">Custom selection (pick reports)</option>'+
-    '</select>'+
-    '<div id="custom'+idx+'" style="display:none;margin-top:6px;">'+reps+
-      '<div class="smallnote">&#9733; flagship report. Each flagship '+moneyTxt(PRICING.flagshipPrice)+' (two flagships '+moneyTxt(PRICING.flagshipPrice*2)+'); each satellite report +'+moneyTxt(PRICING.addOnPerReport)+'. With no flagship the package starts at '+moneyTxt(PRICING.customBaseNoFlagship)+' + '+moneyTxt(PRICING.addOnPerReport)+' per further report.</div>'+
+    '<div id="pkgblock'+idx+'">'+
+      '<label class="fld" for="pkg'+idx+'">Package</label>'+
+      '<select id="pkg'+idx+'" onchange="onPackage('+idx+')">'+
+        '<option value="full">Full subscription (all areas)</option>'+
+        '<option value="macro">Macro &amp; Markets bundle</option>'+
+        '<option value="asset">Asset Allocation bundle</option>'+
+        '<option value="custom">Custom selection (pick reports)</option>'+
+      '</select>'+
+      '<div id="custom'+idx+'" style="display:none;margin-top:6px;">'+reps+
+        '<div class="smallnote">&#9733; flagship report. Each flagship '+moneyTxt(PRICING.flagshipPrice)+' (two flagships '+moneyTxt(PRICING.flagshipPrice*2)+'); each satellite report +'+moneyTxt(PRICING.addOnPerReport)+'. With no flagship the package starts at '+moneyTxt(PRICING.customBaseNoFlagship)+' + '+moneyTxt(PRICING.addOnPerReport)+' per further report.</div>'+
+      '</div>'+
+      '<label class="fld" for="base'+idx+'">List &#8364;/year (base, 1 user) &#8212; editable</label>'+
+      '<input type="number" id="base'+idx+'" min="0" step="500" oninput="recalc('+idx+')">'+
+      '<div class="smallnote">Auto-filled from the package. Closers may show '+moneyTxt(22000)+' on a full sub to make the discount look larger.</div>'+
     '</div>'+
-    '<label class="fld" for="base'+idx+'">List &#8364;/year (base, 1 user) &#8212; editable</label>'+
-    '<input type="number" id="base'+idx+'" min="0" step="500" oninput="recalc('+idx+')">'+
-    '<div class="smallnote">Auto-filled from the package. Closers may show '+moneyTxt(22000)+' on a full sub to make the discount look larger.</div>'+
     '<div class="row" style="margin-top:6px;">'+
       '<div><label class="fld" for="yrs'+idx+'">Years</label><input type="number" id="yrs'+idx+'" min="1" step="1" value="1" oninput="onYears('+idx+')"></div>'+
       '<div><label class="fld" for="usr'+idx+'">User licences</label><input type="number" id="usr'+idx+'" min="1" step="1" value="1" oninput="recalc('+idx+')"></div>'+
       '<div><label class="fld" for="free'+idx+'">Free extra seats</label><input type="number" id="free'+idx+'" min="0" step="1" value="0" oninput="recalc('+idx+')"></div>'+
     '</div>'+
     '<div class="smallnote">"Free extra seats" waives the 10% on that many of the additional licences &#8212; a bargaining chip. The block tells the prospect those seats are included at no extra cost.</div>'+
-    '<label class="chk" style="margin-top:8px;"><input type="checkbox" id="term'+idx+'" onchange="recalc('+idx+')"> <span>24-month enticement: 10% off (auto-on from 2 years)</span></label>'+
+    '<label class="chk" style="margin-top:8px;"><input type="checkbox" id="term'+idx+'" onchange="recalc('+idx+')"> <span>Apply 10% multi-year discount</span></label>'+
+    '<div class="smallnote" id="termNote'+idx+'"></div>'+
     '<div class="row" style="margin-top:6px;">'+
       '<div><label class="fld" for="dis'+idx+'">Discount &#8364;/year</label><input type="number" id="dis'+idx+'" min="0" step="100" value="0" oninput="onDiscount('+idx+')"></div>'+
       '<div><label class="fld" for="net'+idx+'">Net &#8364;/year</label><input type="number" id="net'+idx+'" min="0" step="100" oninput="onNet('+idx+')"></div>'+
@@ -242,15 +249,41 @@ function termDiscount(idx){
   if(!on || years < PRICING.multiYearMinYears) return 0;
   return Math.round(effectiveList(idx) * PRICING.multiYearDiscountPct);
 }
-/* Auto-tick the enticement for multi-year terms, untick for 1 year. */
+/* Multi-year discount auto-ticks at 2+ years and is disabled (greyed) below that. */
 function onYears(idx){
   const years=Math.max(1, Math.floor(+document.getElementById('yrs'+idx).value || 1));
-  document.getElementById('term'+idx).checked = (years >= PRICING.multiYearMinYears);
+  const cb=document.getElementById('term'+idx);
+  if(years >= PRICING.multiYearMinYears){ cb.disabled=false; cb.checked=true; }
+  else { cb.disabled=true; cb.checked=false; }
   recalc(idx);
+}
+function updateTermNote(idx){
+  const years=Math.max(1, Math.floor(+document.getElementById('yrs'+idx).value || 1));
+  const cb=document.getElementById('term'+idx);
+  const note=document.getElementById('termNote'+idx);
+  if(!cb||!note) return;
+  if(years < PRICING.multiYearMinYears){ cb.disabled=true; note.textContent='Only applies to '+PRICING.multiYearMinYears+'-year or longer terms.'; }
+  else { cb.disabled=false; note.textContent = cb.checked ? '10% multi-year discount applied.' : 'Tick to give the 10% multi-year discount.'; }
 }
 
 function onPackage(idx){ togglePkg(idx); setBaseListField(idx); recalc(idx); }
 function onCustomChange(idx){ setBaseListField(idx); recalc(idx); }
+
+/* ---------- Option B mirrors Option A (package, reports, base) ---------- */
+function mirrorOn(){ const m=document.getElementById('mirror1'); return optionCount===2 && m && m.checked; }
+function copyAtoB(){
+  document.getElementById('pkg1').value=document.getElementById('pkg0').value; togglePkg(1);
+  const a=document.querySelectorAll('#custom0 input'), b=document.querySelectorAll('#custom1 input');
+  a.forEach((c,i)=>{ if(b[i]) b[i].checked=c.checked; });
+  document.getElementById('base1').value=document.getElementById('base0').value;
+}
+function onMirror(){
+  const on=document.getElementById('mirror1').checked;
+  document.getElementById('pkgblock1').style.display = on?'none':'block';
+  document.getElementById('mirrorNote1').style.display = on?'block':'none';
+  if(on) copyAtoB();
+  recalc(1);
+}
 
 /* ---------- pricing recompute ---------- */
 function recalc(idx, source){
@@ -280,6 +313,10 @@ function recalc(idx, source){
   html+='<div><span class="net">Net '+moneyTxt(net)+'/year</span> &nbsp;&#183;&nbsp; <b>Total '+moneyTxt(total)+'</b> ('+years+(years===1?' year':' years')+')</div>';
   html+='<div class="smallnote">'+areasLabel(pkg,selected)+' &#183; '+users+(users===1?' user licence':' user licences')+(freeSeats>0?' ('+freeSeats+' free)':'')+(pkg==="custom"?' &#183; '+selected.length+' report'+(selected.length===1?'':'s'):'')+'</div>';
   document.getElementById('calc'+idx).innerHTML=html;
+
+  updateTermNote(idx);
+  // Keep Option B's package/reports/base in step with Option A when mirroring.
+  if(idx===0 && mirrorOn()){ copyAtoB(); recalc(1); }
 }
 function onDiscount(idx){ recalc(idx,'discount'); }
 function onNet(idx){
@@ -299,6 +336,11 @@ function setOptionCount(n){
   document.getElementById('opt2').classList.toggle('on', n===2);
   document.getElementById('optionB').style.display = (n===2)?'block':'none';
   document.getElementById('cardTitle0').textContent = (n===2)?'Option A':'Your offer';
+  if(n===2){
+    const on=document.getElementById('mirror1').checked;
+    document.getElementById('pkgblock1').style.display = on?'none':'block';
+    document.getElementById('mirrorNote1').style.display = on?'block':'none';
+  }
   recalcAll();
 }
 
