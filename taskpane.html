@@ -324,8 +324,12 @@ function validateEmail(){
   warn.textContent=''; return true;
 }
 
-/* ---------- build the email-safe offer block ---------- */
-function optionBlockHtml(idx, letter){
+/* ---------- build the email-safe offer block ----------
+   Single offer  -> Option 2 "soft price table" (label / value, no rules).
+   Two options   -> Option 3 "A / B comparison" (side by side, tinted steer column).
+   Both keep the total line and the included-reports summary as anchors.        */
+
+function optionData(idx){
   const email=getEmail();
   const pkg=document.getElementById('pkg'+idx).value;
   const selected=reportsForPackage(pkg, idx);
@@ -339,56 +343,106 @@ function optionBlockHtml(idx, letter){
   const users=Math.max(1, Math.floor(+document.getElementById('usr'+idx).value || 1));
   const freeSeats=(users-1)-chargeableExtraSeats(idx);
   const lblRaw=document.getElementById('lbl'+idx).value.trim();
-  const lbl = lblRaw || (years+"-year contract");
+  const lbl = lblRaw || (years+"-year subscription");
+  return {email,pkg,selected,list,term,discount,net,years,total,users,freeSeats,lbl,
+          months:years*12, areas:areasLabel(pkg,selected)};
+}
+function savingLabel(d){ return (d.years===2 ? "24-month" : d.years+"-year") + " saving (10%)"; }
+function usersText(d){
+  let t=d.users+(d.users===1?" user licence":" user licences");
+  if(d.freeSeats>0) t+=" ("+d.freeSeats+(d.freeSeats===1?" additional seat":" additional seats")+" included at no extra cost)";
+  return t;
+}
+function reportLinks(d){
+  if(!(document.getElementById('showLinks').checked && d.selected.length)) return '';
+  const ok=d.email && validEmail(d.email);
+  return d.selected.map(r=> ok
+    ? '<a href="'+urlFor(r.slug,d.email)+'" style="color:#2E75B6;text-decoration:none;">'+r.name+'</a>'
+    : r.name).join(', ');
+}
+function includedLine(prefix, linksHtml){
+  if(!linksHtml) return '';
+  return '<p style="margin:12px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#1c1c1c;line-height:1.6;"><span style="color:#8893a0;">'+prefix+' </span>'+linksHtml+'</p>';
+}
 
-  const heading = letter ? ("OPTION "+letter+": "+lbl) : lbl;
-  const periodMonths = years*12;
-  let usersTxt = users+(users===1?" user licence":" user licences");
-  if(freeSeats>0) usersTxt += " ("+freeSeats+(freeSeats===1?" additional seat":" additional seats")+" included at no extra cost)";
-  const arrow=" &#8594; ";
+/* ---- Option 2: single soft price table ---- */
+function renderSingle(d){
+  const F="font-family:Arial,Helvetica,sans-serif;";
+  const lab='style="padding:4px 0;font-size:13px;color:#5b6675;'+F+'"';
+  const val='align="right" style="padding:4px 0;font-size:13px;color:#5b6675;'+F+'"';
+  const labG='style="padding:4px 0;font-size:13px;color:#2e7d32;'+F+'"';
+  const valG='align="right" style="padding:4px 0;font-size:13px;color:#2e7d32;'+F+'"';
+  let rows='';
+  rows+='<tr><td '+lab+'>List price</td><td '+val+'>'+money(d.list)+' / year</td></tr>';
+  if(d.term>0)     rows+='<tr><td '+labG+'>'+savingLabel(d)+'</td><td '+valG+'>&#8722; '+money(d.term)+'</td></tr>';
+  if(d.discount>0) rows+='<tr><td '+labG+'>Negotiated discount</td><td '+valG+'>&#8722; '+money(d.discount)+'</td></tr>';
+  rows+='<tr><td style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net price</td>'+
+        '<td align="right" style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">'+money(d.net)+' / year</td></tr>';
+  rows+='<tr><td style="padding:2px 0;font-size:13px;color:#5b6675;'+F+'">Total over '+d.years+(d.years===1?' year':' years')+'</td>'+
+        '<td align="right" style="padding:2px 0;font-size:13px;color:#5b6675;'+F+'">'+money(d.total)+'</td></tr>';
+  return '<p style="margin:0 0 3px;font-size:15px;color:#1F3A5F;font-weight:bold;'+F+'">'+d.lbl+'</p>'+
+         '<p style="margin:0 0 10px;font-size:12.5px;color:#7a8694;'+F+'">'+d.months+' months &#183; '+d.areas+' &#183; '+usersText(d)+'</p>'+
+         '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="320" style="width:320px;border-collapse:collapse;">'+rows+'</table>'+
+         includedLine('Included:', reportLinks(d));
+}
 
-  let parts=['List '+money(list)+'/year'];
-  if(term>0)     parts.push('24-month saving '+money(term)+' (10%)');
-  if(discount>0) parts.push('discount '+money(discount));
-  parts.push('net <strong>'+money(net)+'/year</strong>');
-  parts.push('Total <strong>'+money(total)+'</strong>');
-  let priceLine=parts.join(arrow);
+/* ---- Option 3: A / B comparison ---- */
+function renderComparison(dA, dB){
+  const F="font-family:Arial,Helvetica,sans-serif;";
+  const tintA = dA.term >= dB.term;             // highlight the column with the bigger saving (steer)
+  const bA = tintA?'#f6faff':'', bB = tintA?'':'#f6faff';
+  const hA = tintA?'#eef4fb':'', hB = tintA?'':'#eef4fb';
+  const bg=c=>c?(' background:'+c+';'):'';
+  const termUsers=d=> d.months+' months &#183; '+d.users+' user'+(d.users>1?'s':'')+(d.freeSeats>0?' (+'+d.freeSeats+' free)':'');
+  const saving=d=>{ const s=d.term+d.discount; return s>0 ? '&#8722; '+money(s)+((d.term>0&&d.discount===0)?' (10%)':'') : '&#8211;'; };
+  const savingColor=d=> (d.term+d.discount)>0 ? '#2e7d32' : '#9aa4b1';
 
-  let block=
-    '<p style="margin:14px 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1F3A5F;"><strong>'+heading+'</strong></p>'+
-    '<p style="margin:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#666666;">Period: '+periodMonths+' months &#183; '+areasLabel(pkg,selected)+' &#183; '+usersTxt+'</p>'+
-    '<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1c1c1c;">'+priceLine+'</p>';
+  const lc='style="padding:9px 0;font-size:13px;color:#5b6675;'+F+'"';
+  const cc=(c,sz,col,bold)=>'align="center" style="padding:9px 14px;font-size:'+sz+'px;color:'+col+';'+(bold?'font-weight:bold;':'')+bg(c)+F+'"';
 
-  if(users===1){
-    block+='<p style="margin:2px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#888888;">Each additional user licence adds 10% to the price.</p>';
-  }
+  let t='<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="500" style="width:500px;border-collapse:collapse;">';
+  // header
+  t+='<tr><td '+lc+'></td>'+
+     '<td align="center" style="padding:10px 14px;font-size:14px;color:#1F3A5F;font-weight:bold;'+bg(hA)+F+'border-radius:8px 8px 0 0;">Option A &#183; '+dA.lbl+'</td>'+
+     '<td align="center" style="padding:10px 14px;font-size:14px;color:#1F3A5F;font-weight:bold;'+bg(hB)+F+'border-radius:8px 8px 0 0;">Option B &#183; '+dB.lbl+'</td></tr>';
+  // term & users
+  t+='<tr><td '+lc+'>Term &amp; users</td><td '+cc(bA,13,'#1c1c1c')+'>'+termUsers(dA)+'</td><td '+cc(bB,13,'#1c1c1c')+'>'+termUsers(dB)+'</td></tr>';
+  // list
+  t+='<tr><td '+lc+'>List / year</td><td '+cc(bA,13,'#5b6675')+'>'+money(dA.list)+'</td><td '+cc(bB,13,'#5b6675')+'>'+money(dB.list)+'</td></tr>';
+  // saving
+  t+='<tr><td style="padding:9px 0;font-size:13px;color:#2e7d32;'+F+'">Your saving</td>'+
+     '<td '+cc(bA,13,savingColor(dA))+'>'+saving(dA)+'</td><td '+cc(bB,13,savingColor(dB))+'>'+saving(dB)+'</td></tr>';
+  // net (hero, border-top)
+  t+='<tr><td style="padding:11px 0;font-size:14px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net / year</td>'+
+     '<td align="center" style="padding:11px 14px;font-size:16px;color:#1F3A5F;font-weight:bold;border-top:1px solid #dbe6f3;'+bg(hA)+F+'">'+money(dA.net)+'</td>'+
+     '<td align="center" style="padding:11px 14px;font-size:16px;color:#1F3A5F;font-weight:bold;border-top:1px solid #dbe6f3;'+bg(hB)+F+'">'+money(dB.net)+'</td></tr>';
+  // total
+  t+='<tr><td style="padding:6px 0;font-size:12.5px;color:#5b6675;'+F+'">Contract total</td>'+
+     '<td '+cc(bA,12.5,'#5b6675')+'>'+money(dA.total)+'</td><td '+cc(bB,12.5,'#5b6675')+'>'+money(dB.total)+'</td></tr>';
+  t+='</table>';
 
-  if(document.getElementById('showLinks').checked && selected.length && email && validEmail(email)){
-    let links=selected.map(r=>'<a href="'+urlFor(r.slug,email)+'" style="color:#2E75B6;text-decoration:none;">'+r.name+'</a>').join(', ');
-    block+='<p style="margin:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#1c1c1c;line-height:1.6;"><span style="color:#888888;">Included: </span>'+links+'</p>';
-  }
-  return block;
+  // included reports: combined if identical, else per option
+  const sigA=dA.selected.map(r=>r.slug).sort().join(','), sigB=dB.selected.map(r=>r.slug).sort().join(',');
+  if(sigA===sigB){ t+=includedLine('Both options include:', reportLinks(dA)); }
+  else { t+=includedLine('Option A includes:', reportLinks(dA)); t+=includedLine('Option B includes:', reportLinks(dB)); }
+  return t;
 }
 
 function offerHtml(){
-  const pname=document.getElementById('pname').value.trim();
   let inner='';
-  if(optionCount===2){
-    inner+=optionBlockHtml(0,'A');
-    inner+=optionBlockHtml(1,'B');
-  } else {
-    inner+=optionBlockHtml(0,'');
-  }
+  if(optionCount===2){ inner=renderComparison(optionData(0), optionData(1)); }
+  else { inner=renderSingle(optionData(0)); }
+
   const validity=document.getElementById('validity').value;
   if(validity){
     const d=new Date(validity+'T00:00:00');
     const txt=d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-    inner+='<p style="margin:14px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#666666;">This offer is valid until '+txt+'.</p>';
+    inner+='<p style="margin:14px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#7a8694;">This offer is valid until '+txt+'.</p>';
   }
-  // 36px left indent, matching the Trial Links overview block
+  // 30px left indent, sits slightly in from the surrounding email copy
   return '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>'+
-         '<td width="36" style="width:36px;font-size:1px;line-height:1px;">&#160;</td>'+
-         '<td style="max-width:540px;">'+inner+'</td></tr></table>';
+         '<td width="30" style="width:30px;font-size:1px;line-height:1px;">&#160;</td>'+
+         '<td style="max-width:560px;">'+inner+'</td></tr></table>';
 }
 
 /* ---------- insert / copy ---------- */
