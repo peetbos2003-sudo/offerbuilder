@@ -113,7 +113,7 @@
       <div><label class="fld" for="free" id="freeLbl">Free extra licences</label><input type="number" id="free" min="0" step="1" value="0" oninput="recalc()"></div>
       <div id="yearsCell"><label class="fld" for="years">Years</label><input type="number" id="years" min="1" step="1" value="1" oninput="onYears()"></div>
     </div>
-    <div class="smallnote" id="freeNote">"Free extra licences" are additional user licences thrown in at no cost &#8212; a bargaining chip the block spells out to the prospect.</div>
+    <div class="smallnote" id="freeNote">"Free extra licences" are added <b>on top</b> of the user licences above, at no cost. So 1 user + 2 free = 3 licences; the block shows their value as a discount.</div>
 
     <label class="chk" style="margin-top:8px;" id="termRow"><input type="checkbox" id="term" onchange="onTerm()"> <span>Apply 10% multi-year discount</span></label>
     <div class="smallnote" id="termNote"></div>
@@ -226,17 +226,18 @@ function areaLabel(pkg, sel){
    discount (each extra licence is worth 10% of the package fee). The multi-year 10% and the
    entry discount apply to the chargeable amount only (base + paid licences), so a free licence
    is never double-discounted. Net is the same either way - this just makes the value visible. */
-function priceCol(baseList, users, freeSeats, years, applyTerm, discount, entryDiscount){
-  const totalExtra=Math.max(0, users-1);
-  const free=Math.max(0, Math.min(freeSeats, totalExtra));
+function priceCol(baseList, paidUsers, freeLicences, years, applyTerm, discount, entryDiscount){
+  const paid=Math.max(1, paidUsers);          // paid user licences (first is in the base)
+  const free=Math.max(0, freeLicences);       // free licences thrown in ON TOP
+  const totalExtra=(paid-1)+free;             // every licence above the first, paid or free
   const list=Math.round(baseList * (1 + PRICING.extraUserUpliftPct*totalExtra));   // all licences, full price
   const freeLic=Math.round(baseList * PRICING.extraUserUpliftPct * free);          // value of the free licences
-  const chargeableList=list-freeLic;                                               // base + paid licences
+  const chargeableList=list-freeLic;                                               // base + paid extra licences
   const entry=Math.max(0, Math.min(entryDiscount||0, chargeableList));
   const term=(applyTerm && years>=PRICING.multiYearMinYears) ? Math.round(chargeableList*PRICING.multiYearDiscountPct) : 0;
   const disc=Math.max(0, Math.min(discount, chargeableList-entry-term));
   const net=list - freeLic - entry - term - disc;
-  return {list, freeLic, entry, term, discount:disc, net, years, total:net*years, users, freeSeats:free};
+  return {list, freeLic, entry, term, discount:disc, net, years, total:net*years, users:paid+free, freeSeats:free};
 }
 
 /* ---------- assemble the columns for the current mode ---------- */
@@ -274,7 +275,7 @@ function columns(){
 
 /* ---------- email-safe rendering ---------- */
 function usersText(d){
-  return d.users+(d.users===1?' user licence':' user licences');
+  return d.users+(d.users===1?' user licence':' user licences')+(d.freeSeats>0?' (incl. '+d.freeSeats+' free)':'');
 }
 function reportLinks(d){
   if(!(document.getElementById('showLinks').checked && d.selected.length)) return '';
@@ -318,7 +319,7 @@ function renderComparison(A, B){
   const bA=steerB?'':'#f6faff', bB=steerB?'#f6faff':'';
   const hA=steerB?'':'#eef4fb', hB=steerB?'#eef4fb':'';
   const bg=c=>c?(' background:'+c+';'):'';
-  const tu=d=> d.months+' months &#183; '+d.users+' user'+(d.users>1?'s':'');
+  const tu=d=> d.months+' months &#183; '+d.users+' user'+(d.users>1?'s':'')+(d.freeSeats>0?' (incl. '+d.freeSeats+' free)':'');
   const lc='style="padding:9px 0;font-size:13px;color:#5b6675;'+F+'"';
   const cc=(c,sz,col)=>'align="center" style="padding:9px 14px;font-size:'+sz+'px;color:'+col+';'+bg(c)+F+'"';
   const dRow=(label,gA,gB)=>{ if(gA<=0 && gB<=0) return '';
