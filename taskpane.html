@@ -110,10 +110,10 @@
   <div class="sect">
     <div class="row" id="seatRow">
       <div><label class="fld" for="users">User licences</label><input type="number" id="users" min="1" step="1" value="1" oninput="recalc()"></div>
-      <div><label class="fld" for="free" id="freeLbl">Free extra seats</label><input type="number" id="free" min="0" step="1" value="0" oninput="recalc()"></div>
+      <div><label class="fld" for="free" id="freeLbl">Free extra licences</label><input type="number" id="free" min="0" step="1" value="0" oninput="recalc()"></div>
       <div id="yearsCell"><label class="fld" for="years">Years</label><input type="number" id="years" min="1" step="1" value="1" oninput="onYears()"></div>
     </div>
-    <div class="smallnote" id="freeNote">"Free extra seats" are thrown in at no cost &#8212; a bargaining chip the block spells out to the prospect.</div>
+    <div class="smallnote" id="freeNote">"Free extra licences" are additional user licences thrown in at no cost &#8212; a bargaining chip the block spells out to the prospect.</div>
 
     <label class="chk" style="margin-top:8px;" id="termRow"><input type="checkbox" id="term" onchange="onTerm()"> <span>Apply 10% multi-year discount</span></label>
     <div class="smallnote" id="termNote"></div>
@@ -221,17 +221,22 @@ function areaLabel(pkg, sel){
   const a=[...new Set(sel.map(r=>r.area))]; return a.length? a.join(' + ') : 'Selected reports';
 }
 
-/* ---------- pricing for one column ---------- */
+/* ---------- pricing for one column ----------
+   Every licence sits in the List at full price; the free ones are then taken back off as a
+   discount (each extra licence is worth 10% of the package fee). The multi-year 10% and the
+   entry discount apply to the chargeable amount only (base + paid licences), so a free licence
+   is never double-discounted. Net is the same either way - this just makes the value visible. */
 function priceCol(baseList, users, freeSeats, years, applyTerm, discount, entryDiscount){
-  const extra=Math.max(0, users-1);
-  const free=Math.max(0, Math.min(freeSeats, extra));
-  const chargeable=extra-free;
-  const list=Math.round(baseList * (1 + PRICING.extraUserUpliftPct*chargeable));
-  const entry=Math.max(0, Math.min(entryDiscount||0, list));
-  const term=(applyTerm && years>=PRICING.multiYearMinYears) ? Math.round(list*PRICING.multiYearDiscountPct) : 0;
-  const disc=Math.max(0, Math.min(discount, list-entry-term));
-  const net=list-entry-term-disc;
-  return {list, entry, term, discount:disc, net, years, total:net*years, users, freeSeats:free};
+  const totalExtra=Math.max(0, users-1);
+  const free=Math.max(0, Math.min(freeSeats, totalExtra));
+  const list=Math.round(baseList * (1 + PRICING.extraUserUpliftPct*totalExtra));   // all licences, full price
+  const freeLic=Math.round(baseList * PRICING.extraUserUpliftPct * free);          // value of the free licences
+  const chargeableList=list-freeLic;                                               // base + paid licences
+  const entry=Math.max(0, Math.min(entryDiscount||0, chargeableList));
+  const term=(applyTerm && years>=PRICING.multiYearMinYears) ? Math.round(chargeableList*PRICING.multiYearDiscountPct) : 0;
+  const disc=Math.max(0, Math.min(discount, chargeableList-entry-term));
+  const net=list - freeLic - entry - term - disc;
+  return {list, freeLic, entry, term, discount:disc, net, years, total:net*years, users, freeSeats:free};
 }
 
 /* ---------- assemble the columns for the current mode ---------- */
@@ -293,7 +298,7 @@ function renderSingle(d){
   const vg='align="right" style="padding:4px 0;font-size:13px;color:#2e7d32;'+F+'"';
   let rows='<tr><td '+lab+'>List price</td><td '+v+'>'+money(d.list)+' / year</td></tr>';
   if(d.entry>0)     rows+='<tr><td '+lg+'>Full subscription discount</td><td '+vg+'>&#8722; '+money(d.entry)+'</td></tr>';
-  if(d.freeSeats>0) rows+='<tr><td '+lg+'>Extra seats included (free)</td><td '+vg+'>+ '+d.freeSeats+(d.freeSeats===1?' seat':' seats')+'</td></tr>';
+  if(d.freeSeats>0) rows+='<tr><td '+lg+'>Free user licences ('+d.freeSeats+')</td><td '+vg+'>&#8722; '+money(d.freeLic)+'</td></tr>';
   if(d.term>0)      rows+='<tr><td '+lg+'>'+savingLabel(d)+(d.entry>0?', extra':'')+'</td><td '+vg+'>&#8722; '+money(d.term)+'</td></tr>';
   if(d.discount>0) rows+='<tr><td '+lg+'>Negotiated discount</td><td '+vg+'>&#8722; '+money(d.discount)+'</td></tr>';
   rows+='<tr><td style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net price</td>'+
@@ -319,9 +324,6 @@ function renderComparison(A, B){
   const dRow=(label,gA,gB)=>{ if(gA<=0 && gB<=0) return '';
     const cell=(c,g)=>'<td align="center" style="padding:9px 14px;font-size:13px;color:'+(g>0?'#2e7d32':'#9aa4b1')+';'+bg(c)+F+'">'+(g>0?'&#8722; '+money(g):'&#8211;')+'</td>';
     return '<tr><td style="padding:9px 0;font-size:13px;color:#2e7d32;'+F+'">'+label+'</td>'+cell(bA,gA)+cell(bB,gB)+'</tr>'; };
-  const seatRow=(gA,gB)=>{ if(gA<=0 && gB<=0) return '';
-    const cell=(c,g)=>'<td align="center" style="padding:9px 14px;font-size:13px;color:'+(g>0?'#2e7d32':'#9aa4b1')+';'+bg(c)+F+'">'+(g>0?'+ '+g+(g===1?' seat':' seats'):'&#8211;')+'</td>';
-    return '<tr><td style="padding:9px 0;font-size:13px;color:#2e7d32;'+F+'">Extra seats included (free)</td>'+cell(bA,gA)+cell(bB,gB)+'</tr>'; };
 
   let t='<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="500" style="width:500px;border-collapse:collapse;">';
   t+='<tr><td '+lc+'></td>'+
@@ -330,7 +332,7 @@ function renderComparison(A, B){
   t+='<tr><td '+lc+'>Term &amp; users</td><td '+cc(bA,13,'#1c1c1c')+'>'+tu(A)+'</td><td '+cc(bB,13,'#1c1c1c')+'>'+tu(B)+'</td></tr>';
   t+='<tr><td '+lc+'>List / year</td><td '+cc(bA,13,'#5b6675')+'>'+money(A.list)+'</td><td '+cc(bB,13,'#5b6675')+'>'+money(B.list)+'</td></tr>';
   t+=dRow('Full subscription discount', A.entry, B.entry);
-  t+=seatRow(A.freeSeats, B.freeSeats);
+  t+=dRow('Free user licences ('+Math.max(A.freeSeats,B.freeSeats)+')', A.freeLic, B.freeLic);
   t+=dRow('24-month saving (10%)', A.term, B.term);
   t+=dRow('Negotiated discount', A.discount, B.discount);
   t+='<tr><td style="padding:11px 0;font-size:14px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net / year</td>'+
@@ -423,10 +425,11 @@ function recalc(){
     const d=cols[0];
     html='<div><b>List</b> '+moneyTxt(d.list)+'/yr'+
          (d.entry>0?' &#8722; <b>full</b> '+moneyTxt(d.entry):'')+
+         (d.freeLic>0?' &#8722; <b>free lic</b> '+moneyTxt(d.freeLic):'')+
          (d.term>0?' &#8722; <b>10%</b> '+moneyTxt(d.term):'')+
          (d.discount>0?' &#8722; <b>disc</b> '+moneyTxt(d.discount):'')+'</div>'+
          '<div><span class="net">Net '+moneyTxt(d.net)+'/year</span> &#183; <b>Total '+moneyTxt(d.total)+'</b> ('+d.years+(d.years===1?' yr':' yrs')+')</div>'+
-         '<div class="smallnote">'+d.areas+' &#183; '+usersText(d)+(d.freeSeats>0?' &#183; +'+d.freeSeats+' free':'')+'</div>';
+         '<div class="smallnote">'+d.areas+' &#183; '+usersText(d)+(d.freeSeats>0?' &#183; '+d.freeSeats+' free (&#8722;'+moneyTxt(d.freeLic)+')':'')+'</div>';
   } else {
     const A=cols[0], B=cols[1];
     const line=d=>'<div class="col"><b>'+d.lbl+':</b> net <span class="net">'+moneyTxt(d.net)+'/yr</span> &#183; total '+moneyTxt(d.total)+
