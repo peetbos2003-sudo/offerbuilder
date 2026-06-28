@@ -271,13 +271,6 @@ function columns(){
 function usersText(d){
   return d.users+(d.users===1?' user licence':' user licences');
 }
-function perkLine(n, text){
-  if(!n || n<=0) return '';
-  return '<p style="margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#2e7d32;">'+text+'</p>';
-}
-function seatPerkText(n, prefix){
-  return prefix+' '+n+(n===1?' additional user licence':' additional user licences')+' at no extra cost.';
-}
 function reportLinks(d){
   if(!(document.getElementById('showLinks').checked && d.selected.length)) return '';
   const ok=d.email && validEmail(d.email);
@@ -299,8 +292,9 @@ function renderSingle(d){
   const lg='style="padding:4px 0;font-size:13px;color:#2e7d32;'+F+'"';
   const vg='align="right" style="padding:4px 0;font-size:13px;color:#2e7d32;'+F+'"';
   let rows='<tr><td '+lab+'>List price</td><td '+v+'>'+money(d.list)+' / year</td></tr>';
-  if(d.entry>0)    rows+='<tr><td '+lg+'>Full subscription discount</td><td '+vg+'>&#8722; '+money(d.entry)+'</td></tr>';
-  if(d.term>0)     rows+='<tr><td '+lg+'>'+savingLabel(d)+(d.entry>0?', extra':'')+'</td><td '+vg+'>&#8722; '+money(d.term)+'</td></tr>';
+  if(d.entry>0)     rows+='<tr><td '+lg+'>Full subscription discount</td><td '+vg+'>&#8722; '+money(d.entry)+'</td></tr>';
+  if(d.freeSeats>0) rows+='<tr><td '+lg+'>Extra seats included (free)</td><td '+vg+'>+ '+d.freeSeats+(d.freeSeats===1?' seat':' seats')+'</td></tr>';
+  if(d.term>0)      rows+='<tr><td '+lg+'>'+savingLabel(d)+(d.entry>0?', extra':'')+'</td><td '+vg+'>&#8722; '+money(d.term)+'</td></tr>';
   if(d.discount>0) rows+='<tr><td '+lg+'>Negotiated discount</td><td '+vg+'>&#8722; '+money(d.discount)+'</td></tr>';
   rows+='<tr><td style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net price</td>'+
         '<td align="right" style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">'+money(d.net)+' / year</td></tr>';
@@ -309,7 +303,6 @@ function renderSingle(d){
   return '<p style="margin:0 0 3px;font-size:15px;color:#1F3A5F;font-weight:bold;'+F+'">'+d.lbl+'</p>'+
          '<p style="margin:0 0 10px;font-size:12.5px;color:#7a8694;'+F+'">'+d.months+' months &#183; '+d.areas+' &#183; '+usersText(d)+'</p>'+
          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="320" style="width:320px;border-collapse:collapse;">'+rows+'</table>'+
-         perkLine(d.freeSeats, seatPerkText(d.freeSeats,'Plus'))+
          includedLine('Included:', reportLinks(d));
 }
 
@@ -326,6 +319,9 @@ function renderComparison(A, B){
   const dRow=(label,gA,gB)=>{ if(gA<=0 && gB<=0) return '';
     const cell=(c,g)=>'<td align="center" style="padding:9px 14px;font-size:13px;color:'+(g>0?'#2e7d32':'#9aa4b1')+';'+bg(c)+F+'">'+(g>0?'&#8722; '+money(g):'&#8211;')+'</td>';
     return '<tr><td style="padding:9px 0;font-size:13px;color:#2e7d32;'+F+'">'+label+'</td>'+cell(bA,gA)+cell(bB,gB)+'</tr>'; };
+  const seatRow=(gA,gB)=>{ if(gA<=0 && gB<=0) return '';
+    const cell=(c,g)=>'<td align="center" style="padding:9px 14px;font-size:13px;color:'+(g>0?'#2e7d32':'#9aa4b1')+';'+bg(c)+F+'">'+(g>0?'+ '+g+(g===1?' seat':' seats'):'&#8211;')+'</td>';
+    return '<tr><td style="padding:9px 0;font-size:13px;color:#2e7d32;'+F+'">Extra seats included (free)</td>'+cell(bA,gA)+cell(bB,gB)+'</tr>'; };
 
   let t='<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="500" style="width:500px;border-collapse:collapse;">';
   t+='<tr><td '+lc+'></td>'+
@@ -334,6 +330,7 @@ function renderComparison(A, B){
   t+='<tr><td '+lc+'>Term &amp; users</td><td '+cc(bA,13,'#1c1c1c')+'>'+tu(A)+'</td><td '+cc(bB,13,'#1c1c1c')+'>'+tu(B)+'</td></tr>';
   t+='<tr><td '+lc+'>List / year</td><td '+cc(bA,13,'#5b6675')+'>'+money(A.list)+'</td><td '+cc(bB,13,'#5b6675')+'>'+money(B.list)+'</td></tr>';
   t+=dRow('Full subscription discount', A.entry, B.entry);
+  t+=seatRow(A.freeSeats, B.freeSeats);
   t+=dRow('24-month saving (10%)', A.term, B.term);
   t+=dRow('Negotiated discount', A.discount, B.discount);
   t+='<tr><td style="padding:11px 0;font-size:14px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net / year</td>'+
@@ -342,8 +339,6 @@ function renderComparison(A, B){
   t+='<tr><td style="padding:6px 0;font-size:12.5px;color:#5b6675;'+F+'">Contract total</td>'+
      '<td '+cc(bA,12.5,'#5b6675')+'>'+money(A.total)+'</td><td '+cc(bB,12.5,'#5b6675')+'>'+money(B.total)+'</td></tr>';
   t+='</table>';
-  const fs=Math.max(A.freeSeats,B.freeSeats);
-  if(fs>0) t+=perkLine(fs, seatPerkText(fs,'Both options include'));
 
   const sigA=A.selected.map(r=>r.slug).sort().join(','), sigB=B.selected.map(r=>r.slug).sort().join(',');
   if(sigA===sigB){ t+=includedLine('Both options include:', reportLinks(A)); }
