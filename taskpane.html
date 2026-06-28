@@ -74,7 +74,6 @@
     <button class="mode on" id="m_single" onclick="setMode('single')">Single offer</button>
     <button class="mode" id="m_term" onclick="setMode('term')">1 yr vs 2 yr</button>
     <button class="mode" id="m_scope" onclick="setMode('scope')">Full vs smaller</button>
-    <button class="mode" id="m_seats" onclick="setMode('seats')">Free seats</button>
   </div>
   <div class="smallnote" id="modeHint"></div>
 
@@ -116,7 +115,7 @@
     </div>
     <div class="smallnote" id="freeNote">"Free extra seats" are thrown in at no cost &#8212; a bargaining chip the block spells out to the prospect.</div>
 
-    <label class="chk" style="margin-top:8px;" id="termRow"><input type="checkbox" id="term" onchange="recalc()"> <span>Apply 10% multi-year discount</span></label>
+    <label class="chk" style="margin-top:8px;" id="termRow"><input type="checkbox" id="term" onchange="onTerm()"> <span>Apply 10% multi-year discount</span></label>
     <div class="smallnote" id="termNote"></div>
 
     <label class="fld" for="discount">Negotiated discount &#8364;/year (optional)</label>
@@ -140,10 +139,11 @@
    ============================================================ */
 const PRICING = {
   fullSubscription: 20000,
+  fullSubEntryDiscount: 2000, // standing discount the moment you go full subscription (20k -> 18k)
   bundleMacro:      10000,
   bundleAsset:      10000,
   extraUserUpliftPct: 0.10,   // each chargeable additional user adds 10% of base
-  multiYearDiscountPct: 0.10, // 2-year (or longer) term discount
+  multiYearDiscountPct: 0.10, // 2-year (or longer) term discount, ON TOP of the entry discount
   multiYearMinYears: 2,
   flagshipPrice:     6000,    // each flagship report (GFM / TAA)
   addOnPerReport:    1000,    // each satellite report
@@ -222,15 +222,16 @@ function areaLabel(pkg, sel){
 }
 
 /* ---------- pricing for one column ---------- */
-function priceCol(baseList, users, freeSeats, years, applyTerm, discount){
+function priceCol(baseList, users, freeSeats, years, applyTerm, discount, entryDiscount){
   const extra=Math.max(0, users-1);
   const free=Math.max(0, Math.min(freeSeats, extra));
   const chargeable=extra-free;
   const list=Math.round(baseList * (1 + PRICING.extraUserUpliftPct*chargeable));
+  const entry=Math.max(0, Math.min(entryDiscount||0, list));
   const term=(applyTerm && years>=PRICING.multiYearMinYears) ? Math.round(list*PRICING.multiYearDiscountPct) : 0;
-  const disc=Math.max(0, Math.min(discount, list-term));
-  const net=list-term-disc;
-  return {list, term, discount:disc, net, years, total:net*years, users, freeSeats:free};
+  const disc=Math.max(0, Math.min(discount, list-entry-term));
+  const net=list-entry-term-disc;
+  return {list, entry, term, discount:disc, net, years, total:net*years, users, freeSeats:free};
 }
 
 /* ---------- assemble the columns for the current mode ---------- */
@@ -242,7 +243,8 @@ function columns(){
   const pkgA=val('pkgA'), selA=pkgReports(pkgA,'A'), baseA=numv('baseA', packageBase(pkgA,selA));
 
   function mk(pkg, sel, base, yrs, doTerm, usr, fr, lbl){
-    const p=priceCol(base, usr, fr, yrs, doTerm, disc);
+    const entry = (pkg==='full') ? PRICING.fullSubEntryDiscount : 0;   // €2,000 off, full sub only
+    const p=priceCol(base, usr, fr, yrs, doTerm, disc, entry);
     return Object.assign(p,{pkg, selected:sel, areas:areaLabel(pkg,sel), email, lbl, months:yrs*12});
   }
 
@@ -262,18 +264,19 @@ function columns(){
       mk(pkgB, selB, baseB, years, applyTerm, users, free, pkgLabel(pkgB))
     ];
   }
-  // seats: A = base seats, B = base seats + free seats (the added ones are free)
-  return [
-    mk(pkgA, selA, baseA, years, applyTerm, users, 0, users+(users===1?' user licence':' user licences')),
-    mk(pkgA, selA, baseA, years, applyTerm, users+free, free, (users+free)+' user licences')
-  ];
+  return [ mk(pkgA, selA, baseA, years, applyTerm, users, free, years+'-year subscription') ];
 }
 
 /* ---------- email-safe rendering ---------- */
 function usersText(d){
-  let t=d.users+(d.users===1?' user licence':' user licences');
-  if(d.freeSeats>0) t+=' ('+d.freeSeats+(d.freeSeats===1?' additional seat':' additional seats')+' included at no extra cost)';
-  return t;
+  return d.users+(d.users===1?' user licence':' user licences');
+}
+function perkLine(n, text){
+  if(!n || n<=0) return '';
+  return '<p style="margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#2e7d32;">'+text+'</p>';
+}
+function seatPerkText(n, prefix){
+  return prefix+' '+n+(n===1?' additional user licence':' additional user licences')+' at no extra cost.';
 }
 function reportLinks(d){
   if(!(document.getElementById('showLinks').checked && d.selected.length)) return '';
@@ -296,7 +299,8 @@ function renderSingle(d){
   const lg='style="padding:4px 0;font-size:13px;color:#2e7d32;'+F+'"';
   const vg='align="right" style="padding:4px 0;font-size:13px;color:#2e7d32;'+F+'"';
   let rows='<tr><td '+lab+'>List price</td><td '+v+'>'+money(d.list)+' / year</td></tr>';
-  if(d.term>0)     rows+='<tr><td '+lg+'>'+savingLabel(d)+'</td><td '+vg+'>&#8722; '+money(d.term)+'</td></tr>';
+  if(d.entry>0)    rows+='<tr><td '+lg+'>Full subscription discount</td><td '+vg+'>&#8722; '+money(d.entry)+'</td></tr>';
+  if(d.term>0)     rows+='<tr><td '+lg+'>'+savingLabel(d)+(d.entry>0?', extra':'')+'</td><td '+vg+'>&#8722; '+money(d.term)+'</td></tr>';
   if(d.discount>0) rows+='<tr><td '+lg+'>Negotiated discount</td><td '+vg+'>&#8722; '+money(d.discount)+'</td></tr>';
   rows+='<tr><td style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net price</td>'+
         '<td align="right" style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">'+money(d.net)+' / year</td></tr>';
@@ -305,6 +309,7 @@ function renderSingle(d){
   return '<p style="margin:0 0 3px;font-size:15px;color:#1F3A5F;font-weight:bold;'+F+'">'+d.lbl+'</p>'+
          '<p style="margin:0 0 10px;font-size:12.5px;color:#7a8694;'+F+'">'+d.months+' months &#183; '+d.areas+' &#183; '+usersText(d)+'</p>'+
          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="320" style="width:320px;border-collapse:collapse;">'+rows+'</table>'+
+         perkLine(d.freeSeats, seatPerkText(d.freeSeats,'Plus'))+
          includedLine('Included:', reportLinks(d));
 }
 
@@ -315,11 +320,12 @@ function renderComparison(A, B){
   const bA=steerB?'':'#f6faff', bB=steerB?'#f6faff':'';
   const hA=steerB?'':'#eef4fb', hB=steerB?'#eef4fb':'';
   const bg=c=>c?(' background:'+c+';'):'';
-  const tu=d=> d.months+' months &#183; '+d.users+' user'+(d.users>1?'s':'')+(d.freeSeats>0?' (+'+d.freeSeats+' free)':'');
-  const sv=d=>{ const s=d.term+d.discount; return s>0?'&#8722; '+money(s)+((d.term>0&&d.discount===0)?' (10%)':''):'&#8211;'; };
-  const svC=d=> (d.term+d.discount)>0?'#2e7d32':'#9aa4b1';
+  const tu=d=> d.months+' months &#183; '+d.users+' user'+(d.users>1?'s':'');
   const lc='style="padding:9px 0;font-size:13px;color:#5b6675;'+F+'"';
   const cc=(c,sz,col)=>'align="center" style="padding:9px 14px;font-size:'+sz+'px;color:'+col+';'+bg(c)+F+'"';
+  const dRow=(label,gA,gB)=>{ if(gA<=0 && gB<=0) return '';
+    const cell=(c,g)=>'<td align="center" style="padding:9px 14px;font-size:13px;color:'+(g>0?'#2e7d32':'#9aa4b1')+';'+bg(c)+F+'">'+(g>0?'&#8722; '+money(g):'&#8211;')+'</td>';
+    return '<tr><td style="padding:9px 0;font-size:13px;color:#2e7d32;'+F+'">'+label+'</td>'+cell(bA,gA)+cell(bB,gB)+'</tr>'; };
 
   let t='<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="500" style="width:500px;border-collapse:collapse;">';
   t+='<tr><td '+lc+'></td>'+
@@ -327,14 +333,17 @@ function renderComparison(A, B){
      '<td align="center" style="padding:10px 14px;font-size:14px;color:#1F3A5F;font-weight:bold;'+bg(hB)+F+'border-radius:8px 8px 0 0;">'+B.lbl+'</td></tr>';
   t+='<tr><td '+lc+'>Term &amp; users</td><td '+cc(bA,13,'#1c1c1c')+'>'+tu(A)+'</td><td '+cc(bB,13,'#1c1c1c')+'>'+tu(B)+'</td></tr>';
   t+='<tr><td '+lc+'>List / year</td><td '+cc(bA,13,'#5b6675')+'>'+money(A.list)+'</td><td '+cc(bB,13,'#5b6675')+'>'+money(B.list)+'</td></tr>';
-  t+='<tr><td style="padding:9px 0;font-size:13px;color:#2e7d32;'+F+'">Your saving</td>'+
-     '<td '+cc(bA,13,svC(A))+'>'+sv(A)+'</td><td '+cc(bB,13,svC(B))+'>'+sv(B)+'</td></tr>';
+  t+=dRow('Full subscription discount', A.entry, B.entry);
+  t+=dRow('24-month saving (10%)', A.term, B.term);
+  t+=dRow('Negotiated discount', A.discount, B.discount);
   t+='<tr><td style="padding:11px 0;font-size:14px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net / year</td>'+
      '<td align="center" style="padding:11px 14px;font-size:16px;color:#1F3A5F;font-weight:bold;border-top:1px solid #dbe6f3;'+bg(hA)+F+'">'+money(A.net)+'</td>'+
      '<td align="center" style="padding:11px 14px;font-size:16px;color:#1F3A5F;font-weight:bold;border-top:1px solid #dbe6f3;'+bg(hB)+F+'">'+money(B.net)+'</td></tr>';
   t+='<tr><td style="padding:6px 0;font-size:12.5px;color:#5b6675;'+F+'">Contract total</td>'+
      '<td '+cc(bA,12.5,'#5b6675')+'>'+money(A.total)+'</td><td '+cc(bB,12.5,'#5b6675')+'>'+money(B.total)+'</td></tr>';
   t+='</table>';
+  const fs=Math.max(A.freeSeats,B.freeSeats);
+  if(fs>0) t+=perkLine(fs, seatPerkText(fs,'Both options include'));
 
   const sigA=A.selected.map(r=>r.slug).sort().join(','), sigB=B.selected.map(r=>r.slug).sort().join(',');
   if(sigA===sigB){ t+=includedLine('Both options include:', reportLinks(A)); }
@@ -360,25 +369,20 @@ function offerHtml(){
 const MODE_HINTS={
   single:'One clean priced offer.',
   term:'Same package, 1-year vs 2-year. The 2-year column gets 10% automatically.',
-  scope:'Full subscription vs a cheaper smaller package, same term — let the prospect trade scope for price.',
-  seats:'Same offer, the second column throws in the free extra seats as a no-cost sweetener.'
+  scope:'Full subscription vs a cheaper smaller package, same term — let the prospect trade scope for price.'
 };
 function setMode(m){
   mode=m;
-  ['single','term','scope','seats'].forEach(x=>document.getElementById('m_'+x).classList.toggle('on', x===m));
+  ['single','term','scope'].forEach(x=>document.getElementById('m_'+x).classList.toggle('on', x===m));
   document.getElementById('modeHint').textContent=MODE_HINTS[m];
   document.getElementById('scopeB').style.display = (m==='scope')?'block':'none';
   document.getElementById('yearsCell').style.display = (m==='term')?'none':'block';
   document.getElementById('termRow').style.display = (m==='term')?'none':'flex';
   document.getElementById('termNote').style.display = (m==='term')?'none':'block';
-  document.getElementById('freeLbl').textContent = (m==='seats')?'Free seats to add':'Free extra seats';
-  document.getElementById('freeNote').textContent = (m==='seats')
-    ? 'The second column adds this many seats at no cost; the first column is without them.'
-    : '"Free extra seats" are thrown in at no cost — a bargaining chip the block spells out to the prospect.';
   document.getElementById('discNote').textContent = (cols2()? 'Applied to both columns.' : 'Applies on top of any multi-year discount.');
   recalc();
 }
-function cols2(){ return mode==='term'||mode==='scope'||mode==='seats'; }
+function cols2(){ return mode==='term'||mode==='scope'; }
 
 /* ---------- package change ---------- */
 function onPkg(which){
@@ -396,17 +400,22 @@ function refreshBaseFromCustom(){
 /* ---------- term checkbox ---------- */
 function onYears(){
   const years=intv('years',1);
-  const cb=document.getElementById('term');
-  if(years>=PRICING.multiYearMinYears){ cb.disabled=false; cb.checked=true; }
-  else { cb.disabled=true; cb.checked=false; }
+  document.getElementById('term').checked = (years>=PRICING.multiYearMinYears); // auto-on at 2+ yrs
+  recalc();
+}
+function onTerm(){
+  // Ticking the multi-year discount implies a multi-year term, so bump to 2 years if needed.
+  if(document.getElementById('term').checked && intv('years',1)<PRICING.multiYearMinYears){
+    document.getElementById('years').value=PRICING.multiYearMinYears;
+  }
   recalc();
 }
 function updateTermNote(){
   if(mode==='term') return;
-  const years=intv('years',1);
   const cb=document.getElementById('term'), note=document.getElementById('termNote');
-  if(years<PRICING.multiYearMinYears){ cb.disabled=true; note.textContent='Only applies to '+PRICING.multiYearMinYears+'-year or longer terms.'; }
-  else { cb.disabled=false; note.textContent = cb.checked?'10% multi-year discount applied.':'Tick to give the 10% multi-year discount.'; }
+  if(!cb||!note) return;
+  note.textContent = cb.checked ? '10% multi-year discount applied.'
+                                : 'Tick to add the 10% multi-year discount (sets a 2-year term).';
 }
 
 /* ---------- live preview ---------- */
@@ -418,10 +427,11 @@ function recalc(){
   if(cols.length===1){
     const d=cols[0];
     html='<div><b>List</b> '+moneyTxt(d.list)+'/yr'+
+         (d.entry>0?' &#8722; <b>full</b> '+moneyTxt(d.entry):'')+
          (d.term>0?' &#8722; <b>10%</b> '+moneyTxt(d.term):'')+
          (d.discount>0?' &#8722; <b>disc</b> '+moneyTxt(d.discount):'')+'</div>'+
          '<div><span class="net">Net '+moneyTxt(d.net)+'/year</span> &#183; <b>Total '+moneyTxt(d.total)+'</b> ('+d.years+(d.years===1?' yr':' yrs')+')</div>'+
-         '<div class="smallnote">'+d.areas+' &#183; '+usersText(d)+'</div>';
+         '<div class="smallnote">'+d.areas+' &#183; '+usersText(d)+(d.freeSeats>0?' &#183; +'+d.freeSeats+' free':'')+'</div>';
   } else {
     const A=cols[0], B=cols[1];
     const line=d=>'<div class="col"><b>'+d.lbl+':</b> net <span class="net">'+moneyTxt(d.net)+'/yr</span> &#183; total '+moneyTxt(d.total)+
