@@ -76,6 +76,7 @@
     <button class="mode" id="m_scope" onclick="setMode('scope')">Full vs smaller</button>
   </div>
   <div class="smallnote" id="modeHint"></div>
+  <label class="chk" id="twoYearFirstRow" style="display:none;margin-top:6px;"><input type="checkbox" id="twoYearFirst" checked onchange="recalc()"> <span>Put the 2-year option first (stronger emphasis)</span></label>
 
   <!-- ===== Shared offer ===== -->
   <div class="sect">
@@ -259,10 +260,9 @@ function columns(){
     return [ mk(pkgA, selA, baseA, years, applyTerm, users, free, years+'-year subscription') ];
   }
   if(mode==='term'){
-    return [
-      mk(pkgA, selA, baseA, 1, false, users, free, '1-year subscription'),
-      mk(pkgA, selA, baseA, 2, true,  users, free, '2-year subscription')
-    ];
+    const one=mk(pkgA, selA, baseA, 1, false, users, free, '1-year subscription');
+    const two=mk(pkgA, selA, baseA, 2, true,  users, free, '2-year subscription');
+    return document.getElementById('twoYearFirst').checked ? [two, one] : [one, two];
   }
   if(mode==='scope'){
     const pkgB=val('pkgB'), selB=pkgReports(pkgB,'B'), baseB=numv('baseB', packageBase(pkgB,selB));
@@ -276,7 +276,7 @@ function columns(){
 
 /* ---------- email-safe rendering ---------- */
 function usersText(d){
-  return d.users+(d.users===1?' user licence':' user licences')+(d.freeSeats>0?', of which '+d.freeSeats+' included free of charge':'');
+  return d.users+(d.users===1?' user licence':' user licences');
 }
 function reportLinks(d){
   if(!(document.getElementById('showLinks').checked && d.selected.length)) return '';
@@ -303,8 +303,14 @@ function renderSingle(d){
   if(d.freeSeats>0) rows+='<tr><td '+lg+'>Free user licences ('+d.freeSeats+')</td><td '+vg+'>&#8722; '+money(d.freeLic)+'</td></tr>';
   if(d.term>0)      rows+='<tr><td '+lg+'>'+savingLabel(d)+(d.entry>0?', extra':'')+'</td><td '+vg+'>&#8722; '+money(d.term)+'</td></tr>';
   if(d.discount>0) rows+='<tr><td '+lg+'>Negotiated discount</td><td '+vg+'>&#8722; '+money(d.discount)+'</td></tr>';
-  rows+='<tr><td style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net price</td>'+
-        '<td align="right" style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">'+money(d.net)+' / year</td></tr>';
+  const totD=d.entry+d.freeLic+d.term+d.discount;
+  const netBorder = totD>0 ? '' : 'border-top:1px solid #e4e9f0;';
+  if(totD>0){
+    rows+='<tr><td style="padding:8px 0 4px;font-size:13px;color:#2e7d32;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Total discount</td>'+
+          '<td align="right" style="padding:8px 0 4px;font-size:13px;color:#2e7d32;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">&#8722; '+money(totD)+'</td></tr>';
+  }
+  rows+='<tr><td style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;'+netBorder+F+'">Net price</td>'+
+        '<td align="right" style="padding:8px 0 4px;font-size:15px;color:#1F3A5F;font-weight:bold;'+netBorder+F+'">'+money(d.net)+' / year</td></tr>';
   rows+='<tr><td style="padding:2px 0;font-size:13px;color:#5b6675;'+F+'">Total over '+d.years+(d.years===1?' year':' years')+'</td>'+
         '<td align="right" style="padding:2px 0;font-size:13px;color:#5b6675;'+F+'">'+money(d.total)+'</td></tr>';
   return '<p style="margin:0 0 3px;font-size:15px;color:#1F3A5F;font-weight:bold;'+F+'">'+d.lbl+'</p>'+
@@ -320,7 +326,7 @@ function renderComparison(A, B){
   const bA=steerB?'':'#f6faff', bB=steerB?'#f6faff':'';
   const hA=steerB?'':'#eef4fb', hB=steerB?'#eef4fb':'';
   const bg=c=>c?(' background:'+c+';'):'';
-  const tu=d=> d.months+' months &#183; '+d.users+' user'+(d.users>1?'s':'')+(d.freeSeats>0?', '+d.freeSeats+' free':'');
+  const tu=d=> d.months+' months &#183; '+d.users+' user'+(d.users>1?'s':'');
   const lc='style="padding:9px 0;font-size:13px;color:#5b6675;'+F+'"';
   const cc=(c,sz,col)=>'align="center" style="padding:9px 14px;font-size:'+sz+'px;color:'+col+';'+bg(c)+F+'"';
   const dRow=(label,gA,gB)=>{ if(gA<=0 && gB<=0) return '';
@@ -337,9 +343,17 @@ function renderComparison(A, B){
   t+=dRow('Free user licences ('+Math.max(A.freeSeats,B.freeSeats)+')', A.freeLic, B.freeLic);
   t+=dRow('24-month saving (10%)', A.term, B.term);
   t+=dRow('Negotiated discount', A.discount, B.discount);
-  t+='<tr><td style="padding:11px 0;font-size:14px;color:#1F3A5F;font-weight:bold;border-top:1px solid #e4e9f0;'+F+'">Net / year</td>'+
-     '<td align="center" style="padding:11px 14px;font-size:16px;color:#1F3A5F;font-weight:bold;border-top:1px solid #dbe6f3;'+bg(hA)+F+'">'+money(A.net)+'</td>'+
-     '<td align="center" style="padding:11px 14px;font-size:16px;color:#1F3A5F;font-weight:bold;border-top:1px solid #dbe6f3;'+bg(hB)+F+'">'+money(B.net)+'</td></tr>';
+  const totA=A.entry+A.freeLic+A.term+A.discount, totB=B.entry+B.freeLic+B.term+B.discount;
+  const hasDisc = totA>0 || totB>0;
+  if(hasDisc){
+    const cellT=(c,g)=>'<td align="center" style="padding:10px 14px;font-size:13px;font-weight:bold;color:'+(g>0?'#2e7d32':'#9aa4b1')+';border-top:1px solid #e4e9f0;'+bg(c)+F+'">'+(g>0?'&#8722; '+money(g):'&#8211;')+'</td>';
+    t+='<tr><td style="padding:10px 0;font-size:13px;font-weight:bold;color:#2e7d32;border-top:1px solid #e4e9f0;'+F+'">Total discount</td>'+cellT(bA,totA)+cellT(bB,totB)+'</tr>';
+  }
+  const nb = hasDisc ? '' : 'border-top:1px solid #e4e9f0;';
+  const nbc = hasDisc ? '' : 'border-top:1px solid #dbe6f3;';
+  t+='<tr><td style="padding:11px 0;font-size:14px;color:#1F3A5F;font-weight:bold;'+nb+F+'">Net / year</td>'+
+     '<td align="center" style="padding:11px 14px;font-size:16px;color:#1F3A5F;font-weight:bold;'+nbc+bg(hA)+F+'">'+money(A.net)+'</td>'+
+     '<td align="center" style="padding:11px 14px;font-size:16px;color:#1F3A5F;font-weight:bold;'+nbc+bg(hB)+F+'">'+money(B.net)+'</td></tr>';
   t+='<tr><td style="padding:6px 0;font-size:12.5px;color:#5b6675;'+F+'">Contract total</td>'+
      '<td '+cc(bA,12.5,'#5b6675')+'>'+money(A.total)+'</td><td '+cc(bB,12.5,'#5b6675')+'>'+money(B.total)+'</td></tr>';
   t+='</table>';
@@ -375,6 +389,7 @@ function setMode(m){
   ['single','term','scope'].forEach(x=>document.getElementById('m_'+x).classList.toggle('on', x===m));
   document.getElementById('modeHint').textContent=MODE_HINTS[m];
   document.getElementById('scopeB').style.display = (m==='scope')?'block':'none';
+  document.getElementById('twoYearFirstRow').style.display = (m==='term')?'flex':'none';
   document.getElementById('yearsCell').style.display = (m==='term')?'none':'block';
   document.getElementById('termRow').style.display = (m==='term')?'none':'flex';
   document.getElementById('termNote').style.display = (m==='term')?'none':'block';
