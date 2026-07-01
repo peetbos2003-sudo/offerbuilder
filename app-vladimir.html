@@ -9,33 +9,33 @@
 <style>
   :root{ --navy:#1F3A5F; --blue:#2E75B6; --light:#D9E2EC; --lighter:#EEF3F8; --grey:#666; --ok:#2e7d32; color-scheme:light; }
   *{box-sizing:border-box}
-  body{font-family:'Segoe UI',Arial,sans-serif;color:#1c1c1c;margin:0;background:#fff;font-size:13px;}
-  .wrap{padding:14px 14px 30px;}
-  h1{color:var(--blue);font-size:16px;margin:0 0 2px;}
-  .tag{display:inline-block;background:var(--blue);color:#fff;font-size:10px;font-weight:700;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:6px;}
-  .sub{color:var(--grey);font-size:11px;margin:4px 0 12px;}
-  label.fld{display:block;font-weight:600;color:var(--navy);font-size:11px;margin:10px 0 4px;}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#1c1c1c;margin:0;background:#fff;font-size:9pt;}
+  .wrap{padding:12px 12px 26px;}
+  h1{color:var(--blue);font-size:12pt;margin:0 0 2px;}
+  .tag{display:inline-block;background:var(--blue);color:#fff;font-size:8pt;font-weight:700;border-radius:4px;padding:1px 5px;vertical-align:middle;margin-left:6px;}
+  .sub{color:var(--grey);font-size:9pt;margin:4px 0 10px;}
+  label.fld{display:block;font-weight:600;color:var(--navy);font-size:9pt;margin:8px 0 3px;}
   input[type=email],input[type=text],input[type=date],input[type=number],select{
-    width:100%;font-size:13px;padding:7px 9px;border:2px solid var(--light);border-radius:6px;outline:none;background:#fff;}
+    width:100%;font-size:9pt;padding:5px 8px;border:1px solid var(--light);border-radius:5px;outline:none;background:#fff;}
   input:focus,select:focus{border-color:var(--blue);}
-  .recip{font-size:11px;color:var(--grey);margin:5px 0 0;}
+  .recip{font-size:9pt;color:var(--grey);margin:5px 0 0;}
   .recip b{color:var(--navy);}
-  .warn{color:#b00000;font-size:11px;margin-top:5px;min-height:14px;}
+  .warn{color:#b00000;font-size:9pt;margin-top:5px;min-height:13px;}
   .row{display:flex;gap:8px;} .row>div{flex:1;}
-  button{font-family:inherit;border:none;border-radius:6px;cursor:pointer;}
-  .ghost{background:var(--lighter);color:var(--navy);border:1px solid var(--light);font-size:11px;padding:5px 9px;}
+  button{font-family:inherit;border:none;border-radius:5px;cursor:pointer;}
+  .ghost{background:var(--lighter);color:var(--navy);border:1px solid var(--light);font-size:9pt;padding:4px 9px;}
   .modebar{display:flex;gap:6px;margin:6px 0 2px;}
-  .mode{background:var(--lighter);color:var(--navy);border:1px solid var(--light);font-size:11.5px;padding:6px 10px;}
+  .mode{background:var(--lighter);color:var(--navy);border:1px solid var(--light);font-size:9pt;padding:5px 10px;}
   .mode.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;}
-  .sect{border:1px solid var(--light);border-radius:8px;padding:10px 12px 12px;margin-top:12px;background:#fff;}
-  .sect h2{color:var(--blue);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;}
-  .smallnote{font-size:10.5px;color:var(--grey);margin-top:3px;}
-  .calc{background:var(--lighter);border-radius:6px;padding:9px 11px;margin-top:12px;font-size:12px;line-height:1.6;}
+  .sect{border:1px solid var(--light);border-radius:8px;padding:9px 11px 11px;margin-top:10px;background:#fff;}
+  .sect h2{color:var(--blue);font-size:9pt;text-transform:uppercase;letter-spacing:.5px;margin:0 0 5px;}
+  .smallnote{font-size:8pt;color:var(--grey);margin-top:3px;}
+  .calc{background:var(--lighter);border-radius:6px;padding:8px 10px;margin-top:10px;font-size:9pt;line-height:1.55;}
   .calc b{color:var(--navy);}
-  .insert{background:var(--blue);color:#fff;font-weight:700;font-size:13px;padding:11px 14px;width:100%;margin-top:14px;}
-  .copy{background:var(--lighter);color:var(--navy);border:1px solid var(--light);font-weight:600;font-size:12px;padding:8px 12px;width:100%;margin-top:8px;}
-  .status{font-size:11px;margin-top:8px;min-height:15px;} .status.ok{color:var(--ok);font-weight:600;} .status.err{color:#b00000;}
-  .hint{font-size:11px;color:var(--grey);margin-top:8px;}
+  .insert{background:var(--blue);color:#fff;font-weight:700;font-size:9pt;padding:9px 14px;width:100%;margin-top:12px;}
+  .copy{background:var(--lighter);color:var(--navy);border:1px solid var(--light);font-weight:600;font-size:9pt;padding:7px 12px;width:100%;margin-top:7px;}
+  .status{font-size:9pt;margin-top:8px;min-height:14px;} .status.ok{color:var(--ok);font-weight:600;} .status.err{color:#b00000;}
+  .hint{font-size:8pt;color:var(--grey);margin-top:8px;}
 </style>
 </head>
 <body>
@@ -74,12 +74,13 @@
     <div class="row" style="margin-top:6px;">
       <div><label class="fld" for="yrsA">Years</label><input type="number" id="yrsA" min="1" step="1" value="2" oninput="recalc()"></div>
       <div><label class="fld" for="usrA">User licences</label><input type="number" id="usrA" min="1" step="1" value="3" oninput="recalc()"></div>
+      <div><label class="fld" for="freeA">Of which free</label><input type="number" id="freeA" min="0" step="1" value="2" oninput="recalc()"></div>
     </div>
     <div class="row" style="margin-top:6px;">
       <div><label class="fld" for="listA">List &#8364;/year</label><input type="number" id="listA" min="0" step="500" value="22000" oninput="recalc()"></div>
       <div><label class="fld" for="netA">Net &#8364;/year</label><input type="number" id="netA" min="0" step="500" value="16000" oninput="recalc()"></div>
     </div>
-    <div class="smallnote">All licences beyond the first show as free bonus (&#8364;2,200/yr each) in the total discount. The net is subscription-only.</div>
+    <div class="smallnote">First user is included. "Of which free" = extra licences given as bonus (&#8364;2,200/yr each, shown in the discount). Any remaining extras are <b>paid</b> and add &#8364;2,200/yr each to the net.</div>
   </div>
 
   <!-- Option B -->
@@ -90,12 +91,15 @@
     <div class="row" style="margin-top:6px;">
       <div><label class="fld" for="yrsB">Years</label><input type="number" id="yrsB" min="1" step="1" value="1" oninput="recalc()"></div>
       <div><label class="fld" for="usrB">User licences</label><input type="number" id="usrB" min="1" step="1" value="1" oninput="recalc()"></div>
+      <div><label class="fld" for="freeB">Of which free</label><input type="number" id="freeB" min="0" step="1" value="0" oninput="recalc()"></div>
     </div>
     <div class="row" style="margin-top:6px;">
       <div><label class="fld" for="listB">List &#8364;/year</label><input type="number" id="listB" min="0" step="500" value="22000" oninput="recalc()"></div>
       <div><label class="fld" for="netB">Net &#8364;/year</label><input type="number" id="netB" min="0" step="500" value="18000" oninput="recalc()"></div>
     </div>
   </div>
+
+  <label style="display:flex;align-items:center;gap:8px;font-size:9pt;margin-top:10px;cursor:pointer;"><input type="checkbox" id="showLinks" checked onchange="recalc()" style="width:15px;height:15px;accent-color:var(--blue);"> <span>Include clickable report links under the offer</span></label>
 
   <div class="calc" id="calc"></div>
   <button class="insert" id="btnInsert" onclick="insertOffer()">Insert offer block</button>
@@ -117,21 +121,55 @@ function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 function dropFocus(){ try{ if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); }catch(_){} }
 function areaLabel(pkg){ return pkg==='macro'?'MACRO & MARKETS':pkg==='asset'?'ASSET ALLOCATION':'FULL SUBSCRIPTION (ALL AREAS)'; }
 
+const BASE="https://ecrresearch.com/research";
+function urlFor(slug,email){ return BASE+"/"+slug+"?email="+encodeURIComponent(email); }
+const REPORTS=[
+  {area:"Macro & Markets",  name:"Global Financial Markets Outlook", slug:"global-financial-markets"},
+  {area:"Macro & Markets",  name:"Interest Rates Outlook",          slug:"interest-rates-outlook"},
+  {area:"Macro & Markets",  name:"Currencies Outlook",              slug:"currencies-outlook"},
+  {area:"Macro & Markets",  name:"Monthly Chart Pack",              slug:"monthly-chart-pack"},
+  {area:"Macro & Markets",  name:"Gold Report",                     slug:"gold-report"},
+  {area:"Asset Allocation", name:"Strategic Asset Allocation",      slug:"strategic-asset-allocation"},
+  {area:"Asset Allocation", name:"Tactical Asset Allocation",       slug:"tactical-asset-allocation"},
+  {area:"Asset Allocation", name:"Quantitative Asset Allocation",   slug:"quantitative-asset-allocation"},
+  {area:"Asset Allocation", name:"Technical Trend Outlook",         slug:"technical-trend-outlook"},
+  {area:"Asset Allocation", name:"Fund Selection",                  slug:"fund-selection"}
+];
+function reportsFor(pkg){
+  if(pkg==='macro') return REPORTS.filter(r=>r.area==='Macro & Markets');
+  if(pkg==='asset') return REPORTS.filter(r=>r.area==='Asset Allocation');
+  return REPORTS.slice();
+}
+function reportLinksHtml(){
+  if(!document.getElementById('showLinks').checked) return '';
+  const reps=reportsFor(val('pkg')); if(!reps.length) return '';
+  const email=(val('email')||'').trim().toLowerCase();
+  const ok=email && validEmail(email);
+  const links=reps.map(r=> ok
+    ? '<a href="'+urlFor(r.slug,email)+'" style="color:#2E75B6;text-decoration:none;">'+r.name+'</a>'
+    : r.name).join(', ');
+  return '<p style="font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#1c1c1c;line-height:1.6;margin:2px 0 0;"><span style="color:#8893a0;">Included: </span>'+links+'</p>';
+}
+
 /* ---- compute one option (Vladimir model) ---- */
 function computeV(sfx){
   const years=intv('yrs'+sfx,1);
   const L=numv('list'+sfx,22000);
-  const N=numv('net'+sfx,0);
+  const N=numv('net'+sfx,0);                        // subscription net per year
   const U=intv('usr'+sfx,1);
-  const freeBonus=Math.max(0, U-1);                 // 1st user in base; all extras are free bonus
-  const subDiscYr=Math.max(0, L-N);                 // subscription discount per year
-  const subDiscTotal=subDiscYr*years;
-  const licValue=freeBonus*PRICING_V.licensePerYear*years;   // value of the free licences
+  const extra=Math.max(0, U-1);                     // 1st user is in the base
+  const F=Math.max(0, Math.min(intv('free'+sfx,0), extra));   // free bonus among the extras
+  const paid=extra-F;                               // remaining extras are paid
+  const lic=PRICING_V.licensePerYear;
+  const paidPerYear=paid*lic;                       // paid licences add to the yearly amount
+  const effNet=N+paidPerYear;                       // what the customer actually pays per year
+  const subDiscTotal=Math.max(0, L-N)*years;        // subscription discount over the term
+  const licValue=F*lic*years;                       // bonus value of the free licences
   const totalDiscount=subDiscTotal+licValue;
   const lblRaw=val('lbl'+sfx).trim();
   const lbl=lblRaw || (years+(years===1?' YEAR':' YEARS')+' SUBSCRIPTION CONTRACT');
-  return {years, months:years*12, L, N, U, freeBonus, subDiscYr, subDiscTotal, licValue,
-          totalDiscount, netTotal:N*years, lbl};
+  return {years, months:years*12, L, N, U, F, paid, paidPerYear, effNet,
+          subDiscTotal, licValue, totalDiscount, netTotal:effNet*years, lbl};
 }
 
 /* ---- render one option box (email-safe, mirrors his sheet) ---- */
@@ -139,49 +177,55 @@ function box(d, letter){
   const F="font-family:Arial,Helvetica,sans-serif;";
   const areas=areaLabel(val('pkg'));
   const bl='color:#2E75B6;font-weight:bold;';
+  const bd='border:1px solid #c9d3df;'; const shade='background:#f2f4f7;';
   const listCell=money(d.L)+' <span style="font-style:italic;color:#666;">(LIST PRICE)</span>'+(d.years>1?' X '+d.years:'');
-  const userLine=d.U+' User License'+(d.U===1?'':'s')+(d.U===1?' <span style="color:#666;">(&#8364;2,200 per additional license)</span>':'');
-  const freeCell='('+d.U+') FREE';
+  const seatsFree=1+d.F;                                  // base user + free bonus = free-to-customer seats
+  const noteAdd=(d.paid>0 || d.U===1) ? ' <span style="color:#666;">(&#8364;2,200 per additional license)</span>' : '';
+  const userLine=d.U+' User License'+(d.U===1?'':'s')+noteAdd;
+  const freeCell='('+seatsFree+') FREE'+(d.paid>0?' + ('+d.paid+') at &#8364;2,200/yr':'');
   let discCell=money(d.subDiscTotal);
-  if(d.freeBonus>0) discCell+=' + '+money(d.licValue)+' <span style="color:#666;">('+d.freeBonus+' LICENSE'+(d.freeBonus===1?'':'S')+')</span>';
-  const netCell='<strong>'+money(d.N)+(d.years>1?' X '+d.years:'')+'</strong>';
-  const totCell='<strong>'+money(d.netTotal)+'</strong>';
+  if(d.licValue>0) discCell+=' + '+money(d.licValue)+' <span style="color:#666;">('+d.F+' LICENSE'+(d.F===1?'':'S')+')</span>';
+  const yrMul=d.years>1?' X '+d.years:'';
 
-  const th='style="border:1px solid #c9d3df;padding:8px 10px;'+F+'"';
-  const td='style="border:1px solid #c9d3df;padding:8px 10px;'+F+'"';
-  const shade='background:#f2f4f7;';
-  return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="620" style="width:620px;border-collapse:collapse;margin:0 0 16px;'+F+'">'+
+  let rows=
     '<tr>'+
-      '<td '+th.replace('"','" ').replace(F,'background:#e9eef5;'+F)+'><span style="'+bl+'font-size:13px;">OPTION '+letter+':</span> <span style="'+bl+'font-size:13px;">'+d.lbl+'</span></td>'+
-      '<td '+th.replace(F,'background:#e9eef5;'+F)+' width="230"><span style="'+bl+'font-size:13px;">NET AMOUNT</span></td>'+
+      '<td style="'+bd+'padding:8px 10px;background:#e9eef5;'+F+'"><span style="'+bl+'font-size:13px;">OPTION '+letter+': '+d.lbl+'</span></td>'+
+      '<td width="230" style="'+bd+'padding:8px 10px;background:#e9eef5;'+F+'"><span style="'+bl+'font-size:13px;">NET AMOUNT</span></td>'+
     '</tr>'+
     '<tr>'+
-      '<td '+td+' valign="top" style="border:1px solid #c9d3df;padding:10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.7;">'+
+      '<td valign="top" style="'+bd+'padding:10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.7;">'+
         'Subscription to ecrresearch.com<br>'+
         '<span style="'+bl+'">PERIOD</span> &nbsp;: '+d.months+' Months<br>'+
         '<span style="'+bl+'">AREAS</span> &nbsp;&nbsp;: '+areas+'<br>'+
         '<span style="'+bl+'">USER</span> &nbsp;&nbsp;&nbsp;: '+userLine+
       '</td>'+
-      '<td '+td+' valign="top" style="border:1px solid #c9d3df;padding:10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.7;">'+listCell+'<br><br>'+freeCell+'</td>'+
+      '<td valign="top" style="'+bd+'padding:10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.7;">'+listCell+'<br><br>'+freeCell+'</td>'+
     '</tr>'+
     '<tr>'+
-      '<td align="right" style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">TOTAL DISCOUNT AMOUNT</td>'+
-      '<td style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:12.5px;color:#1c1c1c;">'+discCell+'</td>'+
+      '<td align="right" style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">TOTAL DISCOUNT AMOUNT</td>'+
+      '<td style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;color:#1c1c1c;">'+discCell+'</td>'+
     '</tr>'+
     '<tr>'+
-      '<td align="right" style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">SUBSCRIPTION AMOUNT PER YEAR (NET)</td>'+
-      '<td style="border:1px solid #c9d3df;padding:7px 10px;background:#fff2a8;'+F+'font-size:13px;color:#1c1c1c;">'+netCell+'</td>'+
-    '</tr>'+
-    '<tr>'+
-      '<td align="right" style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:12.5px;font-weight:bold;color:#1F3A5F;">TOTAL SUBSCRIPTION AMOUNT</td>'+
-      '<td style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:13px;color:#1F3A5F;">'+totCell+'</td>'+
-    '</tr>'+
-  '</table>';
+      '<td align="right" style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">SUBSCRIPTION AMOUNT PER YEAR (NET)</td>'+
+      '<td style="'+bd+'padding:7px 10px;background:#fff2a8;'+F+'font-size:13px;color:#1c1c1c;"><strong>'+money(d.N)+yrMul+'</strong></td>'+
+    '</tr>';
+  if(d.paid>0){
+    rows+='<tr>'+
+      '<td align="right" style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">ADDITIONAL USER LICENCES ('+d.paid+')</td>'+
+      '<td style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;color:#1c1c1c;">'+money(d.paidPerYear)+yrMul+'</td>'+
+    '</tr>';
+  }
+  rows+='<tr>'+
+      '<td align="right" style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;font-weight:bold;color:#1F3A5F;">TOTAL SUBSCRIPTION AMOUNT</td>'+
+      '<td style="'+bd+'padding:7px 10px;'+shade+F+'font-size:13px;color:#1F3A5F;"><strong>'+money(d.netTotal)+'</strong></td>'+
+    '</tr>';
+  return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="620" style="width:620px;border-collapse:collapse;margin:0 0 16px;'+F+'">'+rows+'</table>';
 }
 
 function offerHtml(){
   let inner=box(computeV('A'),'A');
   if(optCount===2) inner+=box(computeV('B'),'B');
+  inner+=reportLinksHtml();
   const validity=val('validity');
   if(validity){
     const dt=new Date(validity+'T00:00:00');
@@ -200,9 +244,12 @@ function setOpts(n){
   recalc();
 }
 function recalc(){
-  const a=computeV('A');
-  let html='<div><b>A:</b> net '+moneyTxt(a.N)+'/yr &#183; total '+moneyTxt(a.netTotal)+' &#183; discount '+moneyTxt(a.totalDiscount)+(a.freeBonus>0?' <span class="smallnote">(incl '+moneyTxt(a.licValue)+' / '+a.freeBonus+' free lic)</span>':'')+'</div>';
-  if(optCount===2){ const b=computeV('B'); html+='<div style="margin-top:4px;"><b>B:</b> net '+moneyTxt(b.N)+'/yr &#183; total '+moneyTxt(b.netTotal)+' &#183; discount '+moneyTxt(b.totalDiscount)+'</div>'; }
+  const line=(d,letter)=>'<div style="margin-top:4px;"><b>'+letter+':</b> pays '+moneyTxt(d.effNet)+'/yr &#183; total '+moneyTxt(d.netTotal)+
+    ' &#183; discount '+moneyTxt(d.totalDiscount)+
+    (d.F>0?' <span class="smallnote">(incl '+moneyTxt(d.licValue)+' / '+d.F+' free lic)</span>':'')+
+    (d.paid>0?' <span class="smallnote">('+d.paid+' paid lic +'+moneyTxt(d.paidPerYear)+'/yr)</span>':'')+'</div>';
+  let html=line(computeV('A'),'A');
+  if(optCount===2) html+=line(computeV('B'),'B');
   document.getElementById('calc').innerHTML=html;
 }
 
