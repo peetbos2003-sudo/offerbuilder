@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECR Offer Builder — V</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<style>
+  :root{ --navy:#1F3A5F; --blue:#2E75B6; --light:#D9E2EC; --lighter:#EEF3F8; --grey:#666; --ok:#2e7d32; color-scheme:light; }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#1c1c1c;margin:0;background:#fff;font-size:13px;}
+  .wrap{padding:14px 14px 30px;}
+  h1{color:var(--blue);font-size:16px;margin:0 0 2px;}
+  .tag{display:inline-block;background:var(--blue);color:#fff;font-size:10px;font-weight:700;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:6px;}
+  .sub{color:var(--grey);font-size:11px;margin:4px 0 12px;}
+  label.fld{display:block;font-weight:600;color:var(--navy);font-size:11px;margin:10px 0 4px;}
+  input[type=email],input[type=text],input[type=date],input[type=number],select{
+    width:100%;font-size:13px;padding:7px 9px;border:2px solid var(--light);border-radius:6px;outline:none;background:#fff;}
+  input:focus,select:focus{border-color:var(--blue);}
+  .recip{font-size:11px;color:var(--grey);margin:5px 0 0;}
+  .recip b{color:var(--navy);}
+  .warn{color:#b00000;font-size:11px;margin-top:5px;min-height:14px;}
+  .row{display:flex;gap:8px;} .row>div{flex:1;}
+  button{font-family:inherit;border:none;border-radius:6px;cursor:pointer;}
+  .ghost{background:var(--lighter);color:var(--navy);border:1px solid var(--light);font-size:11px;padding:5px 9px;}
+  .modebar{display:flex;gap:6px;margin:6px 0 2px;}
+  .mode{background:var(--lighter);color:var(--navy);border:1px solid var(--light);font-size:11.5px;padding:6px 10px;}
+  .mode.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;}
+  .sect{border:1px solid var(--light);border-radius:8px;padding:10px 12px 12px;margin-top:12px;background:#fff;}
+  .sect h2{color:var(--blue);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;}
+  .smallnote{font-size:10.5px;color:var(--grey);margin-top:3px;}
+  .calc{background:var(--lighter);border-radius:6px;padding:9px 11px;margin-top:12px;font-size:12px;line-height:1.6;}
+  .calc b{color:var(--navy);}
+  .insert{background:var(--blue);color:#fff;font-weight:700;font-size:13px;padding:11px 14px;width:100%;margin-top:14px;}
+  .copy{background:var(--lighter);color:var(--navy);border:1px solid var(--light);font-weight:600;font-size:12px;padding:8px 12px;width:100%;margin-top:8px;}
+  .status{font-size:11px;margin-top:8px;min-height:15px;} .status.ok{color:var(--ok);font-weight:600;} .status.err{color:#b00000;}
+  .hint{font-size:11px;color:var(--grey);margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ECR Offer Builder <span class="tag">V</span></h1>
+  <div class="sub">Vladimir edition — reproduces the two-box A/B sheet. List price is the headline (default &#8364;22,000); each licence is &#8364;2,200/yr; free licences show as bonus value inside the total discount. Set the net you negotiate.</div>
+
+  <label class="fld" for="email">Prospect email (optional)</label>
+  <input type="email" id="email" placeholder="name@company.com" autocomplete="off" spellcheck="false">
+  <div class="recip" id="recip"></div>
+  <button class="ghost" style="margin-top:6px;" onclick="useRecipient()">Use recipient</button>
+
+  <div class="row" style="margin-top:4px;">
+    <div><label class="fld" for="pname">Prospect name (optional)</label><input type="text" id="pname" placeholder="e.g. Maria"></div>
+    <div><label class="fld" for="validity">Offer valid until (optional)</label><input type="date" id="validity"></div>
+  </div>
+
+  <label class="fld" for="pkg">Areas</label>
+  <select id="pkg" onchange="recalc()">
+    <option value="full">FULL SUBSCRIPTION (ALL AREAS)</option>
+    <option value="macro">MACRO &amp; MARKETS</option>
+    <option value="asset">ASSET ALLOCATION</option>
+  </select>
+
+  <label class="fld">Options</label>
+  <div class="modebar">
+    <button class="mode on" id="m2" onclick="setOpts(2)">Two options (A / B)</button>
+    <button class="mode" id="m1" onclick="setOpts(1)">One option</button>
+  </div>
+
+  <!-- Option A -->
+  <div class="sect" id="cardA">
+    <h2>Option A</h2>
+    <label class="fld" for="lblA">Contract label</label>
+    <input type="text" id="lblA" placeholder="2 YEARS SUBSCRIPTION CONTRACT" oninput="recalc()">
+    <div class="row" style="margin-top:6px;">
+      <div><label class="fld" for="yrsA">Years</label><input type="number" id="yrsA" min="1" step="1" value="2" oninput="recalc()"></div>
+      <div><label class="fld" for="usrA">User licences</label><input type="number" id="usrA" min="1" step="1" value="3" oninput="recalc()"></div>
+    </div>
+    <div class="row" style="margin-top:6px;">
+      <div><label class="fld" for="listA">List &#8364;/year</label><input type="number" id="listA" min="0" step="500" value="22000" oninput="recalc()"></div>
+      <div><label class="fld" for="netA">Net &#8364;/year</label><input type="number" id="netA" min="0" step="500" value="16000" oninput="recalc()"></div>
+    </div>
+    <div class="smallnote">All licences beyond the first show as free bonus (&#8364;2,200/yr each) in the total discount. The net is subscription-only.</div>
+  </div>
+
+  <!-- Option B -->
+  <div class="sect" id="cardB">
+    <h2>Option B</h2>
+    <label class="fld" for="lblB">Contract label</label>
+    <input type="text" id="lblB" placeholder="1 YEAR SUBSCRIPTION CONTRACT" oninput="recalc()">
+    <div class="row" style="margin-top:6px;">
+      <div><label class="fld" for="yrsB">Years</label><input type="number" id="yrsB" min="1" step="1" value="1" oninput="recalc()"></div>
+      <div><label class="fld" for="usrB">User licences</label><input type="number" id="usrB" min="1" step="1" value="1" oninput="recalc()"></div>
+    </div>
+    <div class="row" style="margin-top:6px;">
+      <div><label class="fld" for="listB">List &#8364;/year</label><input type="number" id="listB" min="0" step="500" value="22000" oninput="recalc()"></div>
+      <div><label class="fld" for="netB">Net &#8364;/year</label><input type="number" id="netB" min="0" step="500" value="18000" oninput="recalc()"></div>
+    </div>
+  </div>
+
+  <div class="calc" id="calc"></div>
+  <button class="insert" id="btnInsert" onclick="insertOffer()">Insert offer block</button>
+  <button class="copy" id="btnCopy" onclick="copyOffer()">Copy offer instead</button>
+  <div class="status" id="status"></div>
+  <div class="hint">Matches Vladimir's sheet. Additional licence = &#8364;2,200/yr. Discount shown as term total; net highlighted.</div>
+</div>
+
+<script>
+const PRICING_V = { licensePerYear: 2200 };
+let optCount = 2;
+
+function val(id){ return document.getElementById(id).value; }
+function intv(id,d){ const v=Math.floor(+document.getElementById(id).value); return isNaN(v)?d:Math.max(d,v); }
+function numv(id,d){ const v=+document.getElementById(id).value; return isNaN(v)?d:Math.max(0,v); }
+function money(n){ return "&#8364;" + Math.round(n||0).toLocaleString('en-US'); }
+function moneyTxt(n){ return "€" + Math.round(n||0).toLocaleString('en-US'); }
+function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function dropFocus(){ try{ if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); }catch(_){} }
+function areaLabel(pkg){ return pkg==='macro'?'MACRO & MARKETS':pkg==='asset'?'ASSET ALLOCATION':'FULL SUBSCRIPTION (ALL AREAS)'; }
+
+/* ---- compute one option (Vladimir model) ---- */
+function computeV(sfx){
+  const years=intv('yrs'+sfx,1);
+  const L=numv('list'+sfx,22000);
+  const N=numv('net'+sfx,0);
+  const U=intv('usr'+sfx,1);
+  const freeBonus=Math.max(0, U-1);                 // 1st user in base; all extras are free bonus
+  const subDiscYr=Math.max(0, L-N);                 // subscription discount per year
+  const subDiscTotal=subDiscYr*years;
+  const licValue=freeBonus*PRICING_V.licensePerYear*years;   // value of the free licences
+  const totalDiscount=subDiscTotal+licValue;
+  const lblRaw=val('lbl'+sfx).trim();
+  const lbl=lblRaw || (years+(years===1?' YEAR':' YEARS')+' SUBSCRIPTION CONTRACT');
+  return {years, months:years*12, L, N, U, freeBonus, subDiscYr, subDiscTotal, licValue,
+          totalDiscount, netTotal:N*years, lbl};
+}
+
+/* ---- render one option box (email-safe, mirrors his sheet) ---- */
+function box(d, letter){
+  const F="font-family:Arial,Helvetica,sans-serif;";
+  const areas=areaLabel(val('pkg'));
+  const bl='color:#2E75B6;font-weight:bold;';
+  const listCell=money(d.L)+' <span style="font-style:italic;color:#666;">(LIST PRICE)</span>'+(d.years>1?' X '+d.years:'');
+  const userLine=d.U+' User License'+(d.U===1?'':'s')+(d.U===1?' <span style="color:#666;">(&#8364;2,200 per additional license)</span>':'');
+  const freeCell='('+d.U+') FREE';
+  let discCell=money(d.subDiscTotal);
+  if(d.freeBonus>0) discCell+=' + '+money(d.licValue)+' <span style="color:#666;">('+d.freeBonus+' LICENSE'+(d.freeBonus===1?'':'S')+')</span>';
+  const netCell='<strong>'+money(d.N)+(d.years>1?' X '+d.years:'')+'</strong>';
+  const totCell='<strong>'+money(d.netTotal)+'</strong>';
+
+  const th='style="border:1px solid #c9d3df;padding:8px 10px;'+F+'"';
+  const td='style="border:1px solid #c9d3df;padding:8px 10px;'+F+'"';
+  const shade='background:#f2f4f7;';
+  return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="620" style="width:620px;border-collapse:collapse;margin:0 0 16px;'+F+'">'+
+    '<tr>'+
+      '<td '+th.replace('"','" ').replace(F,'background:#e9eef5;'+F)+'><span style="'+bl+'font-size:13px;">OPTION '+letter+':</span> <span style="'+bl+'font-size:13px;">'+d.lbl+'</span></td>'+
+      '<td '+th.replace(F,'background:#e9eef5;'+F)+' width="230"><span style="'+bl+'font-size:13px;">NET AMOUNT</span></td>'+
+    '</tr>'+
+    '<tr>'+
+      '<td '+td+' valign="top" style="border:1px solid #c9d3df;padding:10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.7;">'+
+        'Subscription to ecrresearch.com<br>'+
+        '<span style="'+bl+'">PERIOD</span> &nbsp;: '+d.months+' Months<br>'+
+        '<span style="'+bl+'">AREAS</span> &nbsp;&nbsp;: '+areas+'<br>'+
+        '<span style="'+bl+'">USER</span> &nbsp;&nbsp;&nbsp;: '+userLine+
+      '</td>'+
+      '<td '+td+' valign="top" style="border:1px solid #c9d3df;padding:10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.7;">'+listCell+'<br><br>'+freeCell+'</td>'+
+    '</tr>'+
+    '<tr>'+
+      '<td align="right" style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">TOTAL DISCOUNT AMOUNT</td>'+
+      '<td style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:12.5px;color:#1c1c1c;">'+discCell+'</td>'+
+    '</tr>'+
+    '<tr>'+
+      '<td align="right" style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">SUBSCRIPTION AMOUNT PER YEAR (NET)</td>'+
+      '<td style="border:1px solid #c9d3df;padding:7px 10px;background:#fff2a8;'+F+'font-size:13px;color:#1c1c1c;">'+netCell+'</td>'+
+    '</tr>'+
+    '<tr>'+
+      '<td align="right" style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:12.5px;font-weight:bold;color:#1F3A5F;">TOTAL SUBSCRIPTION AMOUNT</td>'+
+      '<td style="border:1px solid #c9d3df;padding:7px 10px;'+shade+F+'font-size:13px;color:#1F3A5F;">'+totCell+'</td>'+
+    '</tr>'+
+  '</table>';
+}
+
+function offerHtml(){
+  let inner=box(computeV('A'),'A');
+  if(optCount===2) inner+=box(computeV('B'),'B');
+  const validity=val('validity');
+  if(validity){
+    const dt=new Date(validity+'T00:00:00');
+    inner+='<p style="font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#666;margin:2px 0 0;">This offer is valid until '+dt.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'.</p>';
+  }
+  return inner;
+}
+
+/* ---- panel ---- */
+function setOpts(n){
+  optCount=n;
+  document.getElementById('m2').classList.toggle('on', n===2);
+  document.getElementById('m1').classList.toggle('on', n===1);
+  document.getElementById('cardB').style.display = (n===2)?'block':'none';
+  document.getElementById('cardA').querySelector('h2').textContent = (n===2)?'Option A':'Your offer';
+  recalc();
+}
+function recalc(){
+  const a=computeV('A');
+  let html='<div><b>A:</b> net '+moneyTxt(a.N)+'/yr &#183; total '+moneyTxt(a.netTotal)+' &#183; discount '+moneyTxt(a.totalDiscount)+(a.freeBonus>0?' <span class="smallnote">(incl '+moneyTxt(a.licValue)+' / '+a.freeBonus+' free lic)</span>':'')+'</div>';
+  if(optCount===2){ const b=computeV('B'); html+='<div style="margin-top:4px;"><b>B:</b> net '+moneyTxt(b.N)+'/yr &#183; total '+moneyTxt(b.netTotal)+' &#183; discount '+moneyTxt(b.totalDiscount)+'</div>'; }
+  document.getElementById('calc').innerHTML=html;
+}
+
+let composeItem=null;
+function prefillRecipient(){
+  try{ composeItem.to.getAsync(function(res){
+    const el=document.getElementById('recip');
+    if(res.status===Office.AsyncResultStatus.Succeeded && res.value && res.value.length){
+      const a=res.value[0].emailAddress||''; el.innerHTML='Recipient: <b>'+(a||'(none)')+'</b>';
+      if(a && !val('email')){ document.getElementById('email').value=a; }
+    } else el.textContent='Add a recipient, then tap "Use recipient".';
+  }); }catch(e){}
+}
+function useRecipient(){ if(composeItem){ document.getElementById('email').value=''; prefillRecipient(); } }
+
+function insertOffer(){
+  const s=document.getElementById('status');
+  if(!composeItem){ s.className='status err'; s.textContent='Open this from a compose window.'; return; }
+  s.className='status'; s.textContent='Inserting...';
+  composeItem.body.setSelectedDataAsync(offerHtml(), {coercionType:Office.CoercionType.Html}, function(res){
+    if(res.status===Office.AsyncResultStatus.Succeeded){ s.className='status ok'; s.textContent='Offer inserted. Click in the email to keep editing.'; dropFocus(); }
+    else { s.className='status err'; s.textContent='Could not insert: '+res.error.message+' — try "Copy offer instead".'; }
+  });
+}
+function copyOffer(){
+  const s=document.getElementById('status');
+  const div=document.createElement('div'); div.contentEditable='true'; div.style.position='fixed'; div.style.opacity='0'; div.innerHTML=offerHtml();
+  document.body.appendChild(div);
+  const r=document.createRange(); r.selectNodeContents(div);
+  const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  try{ document.execCommand('copy'); s.className='status ok'; s.textContent='Copied — paste into the email.'; dropFocus(); }
+  catch(e){ s.className='status err'; s.textContent='Copy failed.'; }
+  sel.removeAllRanges(); document.body.removeChild(div);
+}
+
+Office.onReady(function(info){
+  document.querySelectorAll('button').forEach(b=>b.setAttribute('type','button'));
+  if(info.host===Office.HostType.Outlook && Office.context.mailbox && Office.context.mailbox.item){
+    composeItem=Office.context.mailbox.item; prefillRecipient();
+  }
+  setOpts(2);
+});
+</script>
+</body>
+</html>
