@@ -148,7 +148,7 @@ function reportLinksHtml(){
   const links=reps.map(r=> ok
     ? '<a href="'+urlFor(r.slug,email)+'" style="color:#2E75B6;text-decoration:none;">'+r.name+'</a>'
     : r.name).join(', ');
-  return '<p style="font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#1c1c1c;line-height:1.6;margin:2px 0 0;"><span style="color:#8893a0;">Included: </span>'+links+'</p>';
+  return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="620" style="width:620px;border-collapse:collapse;margin:6px 0 0;"><tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1c1c1c;line-height:1.5;"><span style="color:#8893a0;">Included:</span> '+links+'</td></tr></table>';
 }
 
 /* ---- compute one option (Vladimir model) ---- */
@@ -189,42 +189,43 @@ function box(d, letter){
 
   let rows=
     '<tr>'+
-      '<td style="'+bd+'padding:8px 10px;background:#e9eef5;'+F+'"><span style="'+bl+'font-size:13px;">OPTION '+letter+': '+d.lbl+'</span></td>'+
-      '<td width="230" style="'+bd+'padding:8px 10px;background:#e9eef5;'+F+'"><span style="'+bl+'font-size:13px;">NET AMOUNT</span></td>'+
+      '<td style="'+bd+'padding:5px 10px;background:#e9eef5;'+F+'"><span style="'+bl+'font-size:13px;">OPTION '+letter+': '+d.lbl+'</span></td>'+
+      '<td width="230" style="'+bd+'padding:5px 10px;background:#e9eef5;'+F+'"><span style="'+bl+'font-size:13px;">NET AMOUNT</span></td>'+
     '</tr>'+
     '<tr>'+
-      '<td valign="top" style="'+bd+'padding:10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.7;">'+
+      '<td valign="top" style="'+bd+'padding:6px 10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.4;">'+
         'Subscription to ecrresearch.com<br>'+
         '<span style="'+bl+'">PERIOD</span> &nbsp;: '+d.months+' Months<br>'+
         '<span style="'+bl+'">AREAS</span> &nbsp;&nbsp;: '+areas+'<br>'+
         '<span style="'+bl+'">USER</span> &nbsp;&nbsp;&nbsp;: '+userLine+
       '</td>'+
-      '<td valign="top" style="'+bd+'padding:10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.7;">'+listCell+'<br><br>'+freeCell+'</td>'+
+      '<td valign="top" style="'+bd+'padding:6px 10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.4;">'+listCell+'<br><br>'+freeCell+'</td>'+
     '</tr>'+
     '<tr>'+
-      '<td align="right" style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">TOTAL DISCOUNT AMOUNT</td>'+
-      '<td style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;color:#1c1c1c;">'+discCell+'</td>'+
+      '<td align="right" style="'+bd+'padding:4px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">TOTAL DISCOUNT AMOUNT</td>'+
+      '<td style="'+bd+'padding:4px 10px;'+shade+F+'font-size:12.5px;color:#1c1c1c;">'+discCell+'</td>'+
     '</tr>'+
     '<tr>'+
-      '<td align="right" style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">SUBSCRIPTION AMOUNT PER YEAR (NET)</td>'+
+      '<td align="right" style="'+bd+'padding:4px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">SUBSCRIPTION AMOUNT PER YEAR (NET)</td>'+
       '<td style="'+bd+'padding:7px 10px;background:#fff2a8;'+F+'font-size:13px;color:#1c1c1c;"><strong>'+money(d.N)+yrMul+'</strong></td>'+
     '</tr>';
   if(d.paid>0){
     rows+='<tr>'+
-      '<td align="right" style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">ADDITIONAL USER LICENCES ('+d.paid+')</td>'+
-      '<td style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;color:#1c1c1c;">'+money(d.paidPerYear)+yrMul+'</td>'+
+      '<td align="right" style="'+bd+'padding:4px 10px;'+shade+F+'font-size:12.5px;font-style:italic;color:#333;">ADDITIONAL USER LICENCES ('+d.paid+')</td>'+
+      '<td style="'+bd+'padding:4px 10px;'+shade+F+'font-size:12.5px;color:#1c1c1c;">'+money(d.paidPerYear)+yrMul+'</td>'+
     '</tr>';
   }
   rows+='<tr>'+
-      '<td align="right" style="'+bd+'padding:7px 10px;'+shade+F+'font-size:12.5px;font-weight:bold;color:#1F3A5F;">TOTAL SUBSCRIPTION AMOUNT</td>'+
-      '<td style="'+bd+'padding:7px 10px;'+shade+F+'font-size:13px;color:#1F3A5F;"><strong>'+money(d.netTotal)+'</strong></td>'+
+      '<td align="right" style="'+bd+'padding:4px 10px;'+shade+F+'font-size:12.5px;font-weight:bold;color:#1F3A5F;">TOTAL SUBSCRIPTION AMOUNT</td>'+
+      '<td style="'+bd+'padding:4px 10px;'+shade+F+'font-size:13px;color:#1F3A5F;"><strong>'+money(d.netTotal)+'</strong></td>'+
     '</tr>';
-  return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="620" style="width:620px;border-collapse:collapse;margin:0 0 16px;'+F+'">'+rows+'</table>';
+  return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="620" style="width:620px;border-collapse:collapse;margin:0;'+F+'">'+rows+'</table>';
 }
 
 function offerHtml(){
+  const gap='<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="620" style="width:620px;"><tr><td style="height:20px;font-size:1px;line-height:20px;">&#160;</td></tr></table>';
   let inner=box(computeV('A'),'A');
-  if(optCount===2) inner+=box(computeV('B'),'B');
+  if(optCount===2) inner+=gap+box(computeV('B'),'B');
   inner+=reportLinksHtml();
   const validity=val('validity');
   if(validity){
