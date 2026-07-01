@@ -74,13 +74,13 @@
     <div class="row" style="margin-top:6px;">
       <div><label class="fld" for="yrsA">Years</label><input type="number" id="yrsA" min="1" step="1" value="2" oninput="recalc()"></div>
       <div><label class="fld" for="usrA">User licences</label><input type="number" id="usrA" min="1" step="1" value="3" oninput="recalc()"></div>
-      <div><label class="fld" for="freeA">Of which free</label><input type="number" id="freeA" min="0" step="1" value="2" oninput="recalc()"></div>
+      <div><label class="fld" for="paidA">Of which paid</label><input type="number" id="paidA" min="0" step="1" value="0" oninput="recalc()"></div>
     </div>
     <div class="row" style="margin-top:6px;">
       <div><label class="fld" for="listA">List &#8364;/year</label><input type="number" id="listA" min="0" step="500" value="22000" oninput="recalc()"></div>
       <div><label class="fld" for="netA">Net &#8364;/year</label><input type="number" id="netA" min="0" step="500" value="16000" oninput="recalc()"></div>
     </div>
-    <div class="smallnote">First user is included. "Of which free" = extra licences given as bonus (&#8364;2,200/yr each, shown in the discount). Any remaining extras are <b>paid</b> and add &#8364;2,200/yr each to the net.</div>
+    <div class="smallnote">First user is included. Every extra licence is <b>free bonus</b> by default (&#8364;2,200/yr each, shown in the discount). Set "Of which paid" to charge for some &#8212; those add &#8364;2,200/yr each to the net.</div>
   </div>
 
   <!-- Option B -->
@@ -91,7 +91,7 @@
     <div class="row" style="margin-top:6px;">
       <div><label class="fld" for="yrsB">Years</label><input type="number" id="yrsB" min="1" step="1" value="1" oninput="recalc()"></div>
       <div><label class="fld" for="usrB">User licences</label><input type="number" id="usrB" min="1" step="1" value="1" oninput="recalc()"></div>
-      <div><label class="fld" for="freeB">Of which free</label><input type="number" id="freeB" min="0" step="1" value="0" oninput="recalc()"></div>
+      <div><label class="fld" for="paidB">Of which paid</label><input type="number" id="paidB" min="0" step="1" value="0" oninput="recalc()"></div>
     </div>
     <div class="row" style="margin-top:6px;">
       <div><label class="fld" for="listB">List &#8364;/year</label><input type="number" id="listB" min="0" step="500" value="22000" oninput="recalc()"></div>
@@ -158,8 +158,8 @@ function computeV(sfx){
   const N=numv('net'+sfx,0);                        // subscription net per year
   const U=intv('usr'+sfx,1);
   const extra=Math.max(0, U-1);                     // 1st user is in the base
-  const F=Math.max(0, Math.min(intv('free'+sfx,0), extra));   // free bonus among the extras
-  const paid=extra-F;                               // remaining extras are paid
+  const paid=Math.max(0, Math.min(intv('paid'+sfx,0), extra)); // extras the closer charges for
+  const F=extra-paid;                               // all other extras are free bonus (Vladimir default)
   const lic=PRICING_V.licensePerYear;
   const paidPerYear=paid*lic;                       // paid licences add to the yearly amount
   const effNet=N+paidPerYear;                       // what the customer actually pays per year
@@ -193,11 +193,13 @@ function box(d, letter){
       '<td width="230" style="'+bd+'padding:5px 10px;background:#e9eef5;'+F+'"><span style="'+bl+'font-size:13px;">NET AMOUNT</span></td>'+
     '</tr>'+
     '<tr>'+
-      '<td valign="top" style="'+bd+'padding:8px 10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.9;">'+
-        'Subscription to ecrresearch.com<br>'+
-        '<span style="'+bl+'">PERIOD</span> &nbsp;: '+d.months+' Months<br>'+
-        '<span style="'+bl+'">AREAS</span> &nbsp;&nbsp;: '+areas+'<br>'+
-        '<span style="'+bl+'">USER</span> &nbsp;&nbsp;&nbsp;: '+userLine+
+      '<td valign="top" style="'+bd+'padding:6px 10px;'+F+'font-size:13px;color:#1c1c1c;">'+
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="'+F+'font-size:13px;color:#1c1c1c;">'+
+          '<tr><td style="padding:6px 0;'+F+'font-size:13px;color:#1c1c1c;">Subscription to ecrresearch.com</td></tr>'+
+          '<tr><td style="padding:6px 0;'+F+'font-size:13px;color:#1c1c1c;"><span style="'+bl+'">PERIOD</span> &nbsp;: '+d.months+' Months</td></tr>'+
+          '<tr><td style="padding:6px 0;'+F+'font-size:13px;color:#1c1c1c;"><span style="'+bl+'">AREAS</span> &nbsp;&nbsp;: '+areas+'</td></tr>'+
+          '<tr><td style="padding:6px 0;'+F+'font-size:13px;color:#1c1c1c;"><span style="'+bl+'">USER</span> &nbsp;&nbsp;&nbsp;: '+userLine+'</td></tr>'+
+        '</table>'+
       '</td>'+
       '<td valign="top" style="'+bd+'padding:6px 10px;'+F+'font-size:13px;color:#1c1c1c;line-height:1.4;">'+listCell+'<br><br>'+freeCell+'</td>'+
     '</tr>'+
